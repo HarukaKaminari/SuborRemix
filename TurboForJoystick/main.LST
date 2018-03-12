@@ -1,0 +1,174 @@
+C51 COMPILER V9.52.0.0   MAIN                                                              03/08/2018 22:02:21 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE main.c OPTIMIZE(9,SPEED) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include <INTRINS.H>
+   2          #include "STC15W.h"
+   3          
+   4          
+   5          /*
+   6           --------------------------
+   7          |1 (OUT)        \__/   (INT1) 8|
+   8          |                                                  |
+   9          |2 (VCC)                   (INT0) 7|
+  10          |                STC15W204S                |
+  11          |3 (LED)                        (TXD) 6|
+  12          |                                                  |
+  13          |4 (GND)                        (RXD) 5|
+  14           --------------------------
+  15          
+  16          LED ---|<|---[===]--- VCC
+  17                     Red    330
+  18          
+  19          Fosc = 6MHz
+  20          */
+  21          
+  22          
+  23          // 脉冲输出脚
+  24          sbit OUT = P5^4;
+  25          // LED引脚
+  26          sbit LED = P5^5;
+  27          
+  28          // 停机标志位
+  29          bit isReadyToHalt = 0;
+  30          
+  31          // 方波次数累计
+  32          static volatile unsigned char count = 0;
+  33          
+  34          
+  35          static void GPIO_Init(){
+  36   1              P3M0 = 0;
+  37   1              P3M1 = 0;
+  38   1              P3 = 0;
+  39   1              P5M0 = 0;
+  40   1              P5M1 = 0;
+  41   1              P5 = 0;
+  42   1      }
+  43          
+  44          static void Timer0_Init(){
+  45   1              // 33毫秒@6.000MHz
+  46   1              AUXR &= 0x7F;   // 定时器时钟12T模式
+  47   1              TMOD &= 0xF0;   // 设置定时器模式
+  48   1              TL0 = 0x8C;             // 设置定时初值
+  49   1              TH0 = 0xBF;             // 设置定时初值
+  50   1              TF0 = 0;                // 清除TF0标志
+  51   1              TR0 = 1;                // 定时器0开始计时
+  52   1      }
+  53          
+  54          static void Timer2_Init(){
+  55   1              // 125毫秒@6.000MHz
+C51 COMPILER V9.52.0.0   MAIN                                                              03/08/2018 22:02:21 PAGE 2   
+
+  56   1              AUXR &= 0xFB;   // 定时器时钟12T模式
+  57   1              T2L = 0xDC;             // 设置定时初值
+  58   1              T2H = 0x0B;             // 设置定时初值
+  59   1              AUXR &= 0xEF;   // 定时器2暂时不计时
+  60   1      }
+  61          
+  62          static void Interrupt_Init(){
+  63   1              // INT0中断触发类型为下降沿
+  64   1              IT0 = 1;
+  65   1              // 允许INT0中断
+  66   1              EX0 = 1;
+  67   1              // 允许定时器0中断
+  68   1              ET0 = 1;
+  69   1              // INT1中断触发类型为下降沿
+  70   1              IT1 = 1;
+  71   1              // 允许INT1中断
+  72   1              EX1 = 1;
+  73   1              // 允许定时器2中断
+  74   1              IE2 |= 0x08;//ET2 = 1;
+  75   1              // 允许全局中断
+  76   1              EA = 1;
+  77   1      }
+  78          
+  79          static void INT0_Isr() interrupt 0{
+  80   1              // 方波次数累计归零
+  81   1              count = 0;
+  82   1      }
+  83          
+  84          static void Timer0_Isr() interrupt 1{
+  85   1              // 输出方波
+  86   1              OUT = ~OUT;
+  87   1              // 累计方波次数
+  88   1              count++;
+  89   1              // 超过250个方波，准备停机
+  90   1              if(count > 250){
+  91   2                      count = 0;
+  92   2                      isReadyToHalt = 1;
+  93   2              }
+  94   1      }
+  95          
+  96          static void INT1_Isr() interrupt 2{
+  97   1              // 方波次数累计归零
+  98   1              count = 0;
+  99   1      }
+ 100          
+ 101          static void Timer2_Isr() interrupt 12{
+ 102   1              // 输出方波
+ 103   1              LED = ~LED;
+ 104   1      }
+ 105          
+ 106          void main(){
+ 107   1              // 初始化P3和P5口
+ 108   1              GPIO_Init();
+ 109   1              // 初始化定时器0
+ 110   1              Timer0_Init();
+ 111   1              // 初始化定时器2
+ 112   1              Timer2_Init();
+ 113   1              // 初始化中断
+ 114   1              Interrupt_Init();
+ 115   1              
+ 116   1              while(1){
+ 117   2                      // 检测电量
+C51 COMPILER V9.52.0.0   MAIN                                                              03/08/2018 22:02:21 PAGE 3   
+
+ 118   2                      if(PCON & (1 << 5)){
+ 119   3                              // 如果电量低，允许LED闪烁
+ 120   3                              AUXR |= 0x10;
+ 121   3                              // 清电量检测硬件标志位
+ 122   3                              PCON &= (1 << 5);
+ 123   3                      }else{
+ 124   3                              // 电量正常，停止LED闪烁并且LED灭
+ 125   3                              AUXR &= 0xEF;
+ 126   3                              LED = 1;
+ 127   3                      }
+ 128   2                      
+ 129   2                      // 检测到停机标志
+ 130   2                      if(isReadyToHalt == 1){
+ 131   3                              // 暂时关闭定时器0中断
+ 132   3                              ET0 = 0;
+ 133   3                              // 停机之前先把脉冲输出脚置低电平，以方便INT0和INT1唤醒CPU
+ 134   3                              OUT = 0;
+ 135   3                              // 进入停机模式
+ 136   3                              PCON |= 0x02;
+ 137   3                              _nop_();
+ 138   3                              _nop_();
+ 139   3                              _nop_();
+ 140   3                              _nop_();
+ 141   3                              // 唤醒，清标志位
+ 142   3                              isReadyToHalt = 0;
+ 143   3                              // 重开定时器0中断
+ 144   3                              ET0 = 1;
+ 145   3                      }
+ 146   2              }
+ 147   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    146    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      1    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,12 @@
+[ProjectGroup]
+Version=1.0
+[Project1]
+ProjectPath=Circuit\Schematics.PrjMbd
+[Project2]
+ProjectPath=Library\AT29C256.LibPkg
+[Project3]
+ProjectPath=Library\UT6264.LibPkg
+[Project4]
+ProjectPath=Library\74HC20.LibPkg
+[Project5]
+ProjectPath=Library\CartridgeBondingFinger.LibPkg
