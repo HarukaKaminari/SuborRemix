@@ -10,3 +10,5 @@ ProjectPath=Library\UT6264.LibPkg
 ProjectPath=Library\74HC20.LibPkg
 [Project5]
 ProjectPath=Library\CartridgeBondingFinger.LibPkg
+[Project6]
+ProjectPath=Circuit\PCB.PrjPCB
