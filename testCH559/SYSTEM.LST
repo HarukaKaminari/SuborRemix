@@ -1,0 +1,137 @@
+C51 COMPILER V9.52.0.0   SYSTEM                                                            03/19/2018 18:17:06 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE SYSTEM
+OBJECT MODULE PLACED IN SYSTEM.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE SYSTEM.c LARGE OPTIMIZE(9,SPEED) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "SYSTEM.h"
+   2          
+   3          
+   4          /*******************************************************************************
+   5          * Function Name  : CfgFsys( )
+   6          * Description    : CH559时钟选择和配置函数,默认使用内部晶振12MHz，如果定义了FREQ_SYS可以
+   7                             根据PLL_CFG和CLOCK_CFG配置得到，公式如下：
+   8                             Fsys = (Fosc * ( PLL_CFG & MASK_PLL_MULT ))/(CLOCK_CFG & MASK_SYS_CK_DIV);
+   9                             具体时钟需要自己配置
+  10          * Input          : None
+  11          * Output         : None
+  12          * Return         : None
+  13          *******************************************************************************/ 
+  14          void SYSTEM_SetFreq() small{
+  15   1          SAFE_MOD = 0x55;                                                           //开启安全模式
+  16   1          SAFE_MOD = 0xAA;                                                 
+  17   1      //  CLOCK_CFG |= bOSC_EN_XT;                                                   //使能外部晶振             
+             -                            
+  18   1      //  CLOCK_CFG &= ~bOSC_EN_INT;                                              
+  19   1              CLOCK_CFG &= ~MASK_SYS_CK_DIV;
+  20   1          CLOCK_CFG |= 6;                                                            //配置系统时钟48MHz
+  21   1      //  CLOCK_CFG |= 8;                                                            //配置系统时钟36MHz
+  22   1      //  CLOCK_CFG |= 10;                                                           //配置系统时钟28.8MHz
+  23   1      //  CLOCK_CFG |= 12;                                                           //配置系统时钟24MHz
+  24   1      //  CLOCK_CFG |= 16;                                                           //配置系统时钟18MHz      
+  25   1          SAFE_MOD = 0xFF;                                                           //关闭安全模式  
+  26   1      //  如果修改主频，要同时修改FREQ_SYS，否则会造成延时函数不准
+  27   1      }
+  28          
+  29          void SYSTEM_Delayus(UINT16 n) small{
+  30   1              while ( n ) {  // total = 12~13 Fsys cycles, 1uS @Fsys=12MHz
+  31   2                      ++ SAFE_MOD;  // 2 Fsys cycles, for higher Fsys, add operation here
+  32   2      #ifdef  FREQ_SYS
+  33   2      #if             FREQ_SYS >= 14000000
+  34   2                      ++ SAFE_MOD;
+  35   2      #endif
+  36   2      #if             FREQ_SYS >= 16000000
+  37   2                      ++ SAFE_MOD;
+  38   2      #endif
+  39   2      #if             FREQ_SYS >= 18000000
+  40   2                      ++ SAFE_MOD;
+  41   2      #endif
+  42   2      #if             FREQ_SYS >= 20000000
+  43   2                      ++ SAFE_MOD;
+  44   2      #endif
+  45   2      #if             FREQ_SYS >= 22000000
+  46   2                      ++ SAFE_MOD;
+  47   2      #endif
+  48   2      #if             FREQ_SYS >= 24000000
+  49   2                      ++ SAFE_MOD;
+  50   2      #endif
+  51   2      #if             FREQ_SYS >= 26000000
+  52   2                      ++ SAFE_MOD;
+  53   2      #endif
+  54   2      #if             FREQ_SYS >= 28000000
+C51 COMPILER V9.52.0.0   SYSTEM                                                            03/19/2018 18:17:06 PAGE 2   
+
+  55   2                      ++ SAFE_MOD;
+  56   2      #endif
+  57   2      #if             FREQ_SYS >= 30000000
+  58   2                      ++ SAFE_MOD;
+  59   2      #endif
+  60   2      #if             FREQ_SYS >= 32000000
+  61   2                      ++ SAFE_MOD;
+  62   2      #endif
+  63   2      #if             FREQ_SYS >= 34000000
+  64   2                      ++ SAFE_MOD;
+  65   2      #endif
+  66   2      #if             FREQ_SYS >= 36000000
+  67   2                      ++ SAFE_MOD;
+  68   2      #endif
+  69   2      #if             FREQ_SYS >= 38000000
+  70   2                      ++ SAFE_MOD;
+  71   2      #endif
+  72   2      #if             FREQ_SYS >= 40000000
+  73   2                      ++ SAFE_MOD;
+  74   2      #endif
+  75   2      #if             FREQ_SYS >= 42000000
+  76   2                      ++ SAFE_MOD;
+  77   2      #endif
+  78   2      #if             FREQ_SYS >= 44000000
+  79   2                      ++ SAFE_MOD;
+  80   2      #endif
+  81   2      #if             FREQ_SYS >= 46000000
+  82   2                      ++ SAFE_MOD;
+  83   2      #endif
+  84   2      #if             FREQ_SYS >= 48000000
+  85   2                      ++ SAFE_MOD;
+  86   2      #endif
+  87   2      #if             FREQ_SYS >= 50000000
+                              ++ SAFE_MOD;
+              #endif
+  90   2      #if             FREQ_SYS >= 52000000
+                              ++ SAFE_MOD;
+              #endif
+  93   2      #if             FREQ_SYS >= 54000000
+                              ++ SAFE_MOD;
+              #endif
+  96   2      #if             FREQ_SYS >= 56000000
+                              ++ SAFE_MOD;
+              #endif
+  99   2      #endif
+ 100   2                      -- n;
+ 101   2              }
+ 102   1      }
+ 103          
+ 104          void SYSTEM_Delayms(UINT16 n) small{
+ 105   1              while(n){
+ 106   2                      SYSTEM_Delayus(1000);
+ 107   2                      --n;
+ 108   2              }
+ 109   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     78    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+C51 COMPILER V9.52.0.0   SYSTEM                                                            03/19/2018 18:17:06 PAGE 3   
+
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

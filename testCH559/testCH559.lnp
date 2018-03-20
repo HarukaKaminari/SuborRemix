@@ -1,0 +1,13 @@
+"CH559.obj",
+"testMain.obj",
+"STDIO.obj",
+"TIMER0.obj",
+".\KM_CHANGE4V10_48M.LIB",
+"KEYBOARD.obj",
+"SYSTEM.obj",
+"EXPINTERFACE.obj",
+"GPIO.obj",
+"I2C.obj",
+"SSD1306.obj" 
+TO "testCH559" 
+RAMSIZE(256) 

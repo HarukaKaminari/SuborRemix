@@ -7,9 +7,3 @@ F:\github\SuborRemix\TurboForJoystick\TurboForJoystick.uvproj
 Project File Date:  03/08/2018
 
 <h2>Output:</h2>
-Rebuild target 'TurboForJoystick'
-compiling main.c...
-linking...
-Program Size: data=10.1 xdata=0 code=307
-creating hex file from "TurboForJoystick"...
-"TurboForJoystick" - 0 Error(s), 0 Warning(s).

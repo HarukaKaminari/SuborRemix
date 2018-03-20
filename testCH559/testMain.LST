@@ -1,0 +1,267 @@
+C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/19/2018 18:17:06 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE TESTMAIN
+OBJECT MODULE PLACED IN testMain.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE testMain.c LARGE OPTIMIZE(9,SPEED) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "typedef.h"
+   2          #include "SYSTEM.h"
+   3          #include "STDIO.h"
+   4          #include "EXKM.h"
+   5          //#include "TIMER0.h"
+   6          #include "KEYBOARD.h"
+   7          #include "EXPINTERFACE.h"
+   8          #include <stdio.h>
+   9          #include <string.h>
+  10          
+  11          
+  12          bit  InitFlag;
+  13          static u16 t = 0;
+  14          
+  15          static u8 data mode = 0;
+  16          bit isChangedMode = 1;
+  17          
+  18          
+  19          /*******************************************************************************
+  20          * Function Name  : mDelayus(UNIT16 n)
+  21          * Description    : us延时函数
+  22          * Input          : UNIT16 n
+  23          * Output         : None
+  24          * Return         : None
+  25          *******************************************************************************/
+  26          void    mDelayuS( UINT16 n )                           // 以uS为单位延时
+  27          {
+  28   1              while ( n ) {  // total = 12~13 Fsys cycles, 1uS @Fsys=12MHz
+  29   2                      ++ SAFE_MOD;  // 2 Fsys cycles, for higher Fsys, add operation here
+  30   2      #ifdef  FREQ_SYS
+  31   2      #if             FREQ_SYS >= 14000000
+  32   2                      ++ SAFE_MOD;
+  33   2      #endif
+  34   2      #if             FREQ_SYS >= 16000000
+  35   2                      ++ SAFE_MOD;
+  36   2      #endif
+  37   2      #if             FREQ_SYS >= 18000000
+  38   2                      ++ SAFE_MOD;
+  39   2      #endif
+  40   2      #if             FREQ_SYS >= 20000000
+  41   2                      ++ SAFE_MOD;
+  42   2      #endif
+  43   2      #if             FREQ_SYS >= 22000000
+  44   2                      ++ SAFE_MOD;
+  45   2      #endif
+  46   2      #if             FREQ_SYS >= 24000000
+  47   2                      ++ SAFE_MOD;
+  48   2      #endif
+  49   2      #if             FREQ_SYS >= 26000000
+  50   2                      ++ SAFE_MOD;
+  51   2      #endif
+  52   2      #if             FREQ_SYS >= 28000000
+  53   2                      ++ SAFE_MOD;
+  54   2      #endif
+  55   2      #if             FREQ_SYS >= 30000000
+C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/19/2018 18:17:06 PAGE 2   
+
+  56   2                      ++ SAFE_MOD;
+  57   2      #endif
+  58   2      #if             FREQ_SYS >= 32000000
+  59   2                      ++ SAFE_MOD;
+  60   2      #endif
+  61   2      #if             FREQ_SYS >= 34000000
+  62   2                      ++ SAFE_MOD;
+  63   2      #endif
+  64   2      #if             FREQ_SYS >= 36000000
+  65   2                      ++ SAFE_MOD;
+  66   2      #endif
+  67   2      #if             FREQ_SYS >= 38000000
+  68   2                      ++ SAFE_MOD;
+  69   2      #endif
+  70   2      #if             FREQ_SYS >= 40000000
+  71   2                      ++ SAFE_MOD;
+  72   2      #endif
+  73   2      #if             FREQ_SYS >= 42000000
+  74   2                      ++ SAFE_MOD;
+  75   2      #endif
+  76   2      #if             FREQ_SYS >= 44000000
+  77   2                      ++ SAFE_MOD;
+  78   2      #endif
+  79   2      #if             FREQ_SYS >= 46000000
+  80   2                      ++ SAFE_MOD;
+  81   2      #endif
+  82   2      #if             FREQ_SYS >= 48000000
+  83   2                      ++ SAFE_MOD;
+  84   2      #endif
+  85   2      #if             FREQ_SYS >= 50000000
+                              ++ SAFE_MOD;
+              #endif
+  88   2      #if             FREQ_SYS >= 52000000
+                              ++ SAFE_MOD;
+              #endif
+  91   2      #if             FREQ_SYS >= 54000000
+                              ++ SAFE_MOD;
+              #endif
+  94   2      #if             FREQ_SYS >= 56000000
+                              ++ SAFE_MOD;
+              #endif
+  97   2      #endif
+  98   2                      -- n;
+  99   2              }
+ 100   1      }
+ 101          
+ 102          /*******************************************************************************
+ 103          * Function Name  : mDelayms(UNIT16 n)
+ 104          * Description    : ms延时函数
+ 105          * Input          : UNIT16 n
+ 106          * Output         : None
+ 107          * Return         : None
+ 108          *******************************************************************************/
+ 109          void    mDelaymS( UINT16 n )                              // 以mS为单位延时
+ 110          {
+ 111   1          while ( n )
+ 112   1          {
+ 113   2              mDelayuS( 1000 );
+ 114   2              -- n;
+ 115   2          }
+ 116   1      }
+ 117          
+C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/19/2018 18:17:06 PAGE 3   
+
+ 118          /*******************************************************************************
+ 119          * Function Name  : CfgFsys( )
+ 120          * Description    : CH559时钟选择和配置函数,默认使用内部晶振12MHz，如果定义了FREQ_SYS可以
+ 121                             根据PLL_CFG和CLOCK_CFG配置得到，公式如下：
+ 122                             Fsys = (Fosc * ( PLL_CFG & MASK_PLL_MULT ))/(CLOCK_CFG & MASK_SYS_CK_DIV);
+ 123                             具体时钟需要自己配置
+ 124          * Input          : None
+ 125          * Output         : None
+ 126          * Return         : None
+ 127          *******************************************************************************/ 
+ 128          /*
+ 129          void    CfgFsys( )  
+ 130          {
+ 131              SAFE_MOD = 0x55;                                                           //开启安全模式
+ 132              SAFE_MOD = 0xAA;                                                 
+ 133          //  CLOCK_CFG |= bOSC_EN_XT;                                                   //使能外部晶振             
+             -                            
+ 134          //  CLOCK_CFG &= ~bOSC_EN_INT;                                              
+ 135                    CLOCK_CFG &= ~MASK_SYS_CK_DIV;
+ 136              CLOCK_CFG |= 6;                                                            //配置系统时钟48MHz
+ 137          //  CLOCK_CFG |= 8;                                                            //配置系统时钟36MHz
+ 138          //  CLOCK_CFG |= 10;                                                           //配置系统时钟28.8MHz
+ 139          //  CLOCK_CFG |= 12;                                                           //配置系统时钟24MHz
+ 140          //  CLOCK_CFG |= 16;                                                           //配置系统时钟18MHz      
+ 141              SAFE_MOD = 0xFF;                                                           //关闭安全模式  
+ 142          //  如果修改主频，要同时修改FREQ_SYS，否则会造成延时函数不准
+ 143          }
+ 144          */
+ 145          
+ 146          
+ 147          
+ 148          void main() small{
+ 149   1              SYSTEM_SetFreq();
+ 150   1              SYSTEM_Delayms(20);
+ 151   1              STDIO_Init();
+ 152   1              STDIO_SetUART0ToP0();
+ 153   1              printf("UART initialized.\n");
+ 154   1              KM_LibInit();
+ 155   1              printf("KMLib initialized.\n");
+ 156   1              EXPINTERFACE_Init(0);
+ 157   1              printf("ExpInterface initialized.\n");
+ 158   1              while(1){
+ 159   2                      u8 s;
+ 160   2                      u8 srcBuf[10];
+ 161   2                      u8 dstBuf[10];
+ 162   2                      u8 srcLen;
+ 163   2                      u8 dstLen;
+ 164   2                      
+ 165   2                      KM_ProcessSystem();
+ 166   2                      s = KM_HostGetData(0, dstBuf, &dstLen, srcBuf, &srcLen);
+ 167   2                      if(s == 0){
+ 168   3                              // 获取数据成功 buf 存放数据，len数据长度
+ 169   3                              for(s=0;s<dstLen;s++){
+ 170   4                                      printf("%02X ", (UINT16)dstBuf[s]);
+ 171   4                              }
+ 172   3                              printf("\n");
+ 173   3                              
+ 174   3                              KEYBOARD_Refresh(dstBuf);
+ 175   3                              // 组合键Ctrl+Alt+Shift+Esc，切换键盘工作模式
+ 176   3                              if(
+ 177   3                                      (KEYBOARD_IsKeyHold(0x100) | KEYBOARD_IsKeyHold(0x104)) &
+ 178   3                                      (KEYBOARD_IsKeyHold(0x101) | KEYBOARD_IsKeyHold(0x105)) &
+C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/19/2018 18:17:06 PAGE 4   
+
+ 179   3                                      (KEYBOARD_IsKeyHold(0x102) | KEYBOARD_IsKeyHold(0x106))){
+ 180   4                                      if(KEYBOARD_IsKeyDown(0x29)){
+ 181   5                                              mode++;
+ 182   5                                              isChangedMode = 1;
+ 183   5                                      }
+ 184   4                                      if(KEYBOARD_IsKeyUp(0x29)){
+ 185   5                                              
+ 186   5                                      }
+ 187   4                              }
+ 188   3                              
+ 189   3                              if(isChangedMode){
+ 190   4                                      switch(mode){
+ 191   5                                              case 0:{
+ 192   6                                                      EXPINTERFACE_InitMode0();
+ 193   6                                              }break;
+ 194   5                                              case 1:{
+ 195   6                                                      EXPINTERFACE_InitMode1();
+ 196   6                                              }break;
+ 197   5                                              case 2:{
+ 198   6                                                      EXPINTERFACE_InitMode2();
+ 199   6                                              }break;
+ 200   5                                      }
+ 201   4                                      isChangedMode = 0;
+ 202   4                              }
+ 203   3                              if(1){
+ 204   4                                      switch(mode){
+ 205   5                                              case 0:{
+ 206   6                                                      EXPINTERFACE_UpdateMode0();
+ 207   6                                              }break;
+ 208   5                                              case 1:{
+ 209   6                                                      EXPINTERFACE_UpdateMode1();
+ 210   6                                              }break;
+ 211   5                                              case 2:{
+ 212   6                                                      EXPINTERFACE_UpdateMode2();
+ 213   6                                              }break;
+ 214   5                                      }
+ 215   4                              }
+ 216   3                      }
+ 217   2                      
+ 218   2                      if(t == 0){
+ 219   3                              t = 0xFFFF;
+ 220   3                              KM_TypeQuery(0, dstBuf, &dstLen);
+ 221   3                              for(s=0;s<dstLen;s=s+2){        
+ 222   4                                      if(dstBuf[s + 1] == DEV_KEYBOARD){                      
+ 223   5                                              printf("ifc %02x keyboard\n", (UINT16)dstBuf[s]);
+ 224   5                                      }        
+ 225   4                                      if(dstBuf[s + 1] == DEV_MOUSE){                 
+ 226   5                                              printf("ifc %02x mouse\n", (UINT16)dstBuf[s]);
+ 227   5                                      }
+ 228   4                                      if(dstBuf[s + 1] == DEV_MOUSE_BIOS){                    
+ 229   5                                              printf("ifc %02x mouse-bios\n", (UINT16)dstBuf[s]);
+ 230   5                                      }
+ 231   4                              }
+ 232   3                      }
+ 233   2                      t--;
+ 234   2              }
+ 235   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    501    ----
+   CONSTANT SIZE    =    130    ----
+C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/19/2018 18:17:06 PAGE 5   
+
+   XDATA SIZE       =      2    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      1      23
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

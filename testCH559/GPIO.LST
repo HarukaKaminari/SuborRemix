@@ -1,0 +1,147 @@
+C51 COMPILER V9.52.0.0   GPIO                                                              03/19/2018 18:17:07 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE GPIO
+OBJECT MODULE PLACED IN GPIO.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE GPIO.c LARGE OPTIMIZE(9,SPEED) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "GPIO.h"
+   2          
+   3          
+   4          /*******************************************************************************
+   5          * Description    : 端口0、1、2、3、4驱动能力设置
+   6          * Input          : UINT8 Port端口选择(0、1、2、3、4)
+   7                             bit Cap驱动能力选择((0)5mA、(1)20mA(注意:P1口是10mA))
+   8          * Output         : None
+   9          * Return         : None
+  10          *******************************************************************************/
+  11          void GPIO_DrivCap(UINT8 Port, bit Cap){
+  12   1              if(Port > 4){
+  13   2                      return;
+  14   2              }
+  15   1              if(Cap == 0){
+  16   2                      if(Port == 4)
+  17   2                              P4_CFG &= ~(1 << bP4_DRV);
+  18   2                      else
+  19   2                              PORT_CFG &= ~(bP0_DRV << Port); // 驱动电流最大5mA
+  20   2              }else{
+  21   2                      if(Port == 4)
+  22   2                              P4_CFG |= 1 << bP4_DRV;
+  23   2                      else
+  24   2                              PORT_CFG |= (bP0_DRV << Port);  // 驱动电流最大20mA，P1口是10mA
+  25   2              }
+  26   1      }
+  27          
+  28          /*******************************************************************************
+  29          * Description    : 端口0、1、2、3引脚模式设置
+  30          * Input          : UINT8 Port端口选择(0、1、2、3)
+  31                             UINT8 Cap驱动方式选择(bPn_OC & Pn_DIR & Pn_PU)
+  32                             0(000)：仅输入，无上拉；
+  33                             1(001)：仅输入，带上拉；
+  34                             2(01x)：推挽输出，高低电平强驱动；
+  35                             3(100)：开漏输出，无上拉，支持输入；
+  36                             4(110)：开漏输出，无上拉,当转变输出由低到高时，仅驱动2个时钟的高电平
+  37                             5(101)：准双向(标准51模式)，开漏输出，带上拉
+  38                             6(111)：准双向(标准51模式)，开漏输出，带上拉，当转变输出由低到高时，仅驱动2个时钟的高电
+             -平
+  39                             UINT8 PinNum(引脚选择0-7)
+  40          * Output         : None
+  41          * Return         : None
+  42          *******************************************************************************/
+  43          void GPIO_SelMode(UINT8 Port, UINT8 Mode, UINT8 PinNum){
+  44   1              UINT8 Pn_DIR, Pn_PU;
+  45   1              if(Port >= 4){
+  46   2                      return;
+  47   2              }
+  48   1              switch(Mode){
+  49   2                      case 0:                                                         // 仅输入，无上拉
+  50   2                              PORT_CFG &= ~(bP0_OC << Port);
+  51   2                              Pn_DIR &= ~(1 << PinNum);
+  52   2                              Pn_PU &= ~(1 << PinNum);
+  53   2                      break;
+  54   2                      case 1:                                                         // 仅输入，带上拉
+C51 COMPILER V9.52.0.0   GPIO                                                              03/19/2018 18:17:07 PAGE 2   
+
+  55   2                              PORT_CFG &= ~(bP0_OC << Port);
+  56   2                              Pn_DIR &= ~(1 << PinNum);
+  57   2                              Pn_PU |= 1 << PinNum;
+  58   2                      break;
+  59   2                      case 2:                                                         // 推挽输出，高低电平强驱动
+  60   2                              PORT_CFG &= ~(bP0_OC << Port);
+  61   2                              Pn_DIR |= ~(1 << PinNum);
+  62   2                      break;
+  63   2                      case 3:                                                         // 开漏输出，无上拉，支持输入
+  64   2                              PORT_CFG |= (bP0_OC << Port);
+  65   2                              Pn_DIR &= ~(1 << PinNum);
+  66   2                              Pn_PU &= ~(1 << PinNum);
+  67   2                      break;
+  68   2                      case 4:                                                         // 开漏输出，无上拉,当转变输出由低到高时，仅驱动2个时钟的高电平
+  69   2                              PORT_CFG |= (bP0_OC << Port);
+  70   2                              Pn_DIR |= 1 << PinNum;
+  71   2                              Pn_PU &= ~(1 << PinNum);
+  72   2                      break;
+  73   2                      case 5:                                                         // 弱准双向(标准51模式)，开漏输出，带上拉
+  74   2                              PORT_CFG |= (bP0_OC << Port);
+  75   2                              Pn_DIR &= ~(1 << PinNum);
+  76   2                              Pn_PU |= 1 << PinNum;
+  77   2                      break;
+  78   2                      case 6:                                                         // 准双向(标准51模式)，开漏输出，带上拉，当转变输出由低到高时，仅驱动2个时钟的高电平
+  79   2                              PORT_CFG |= (bP0_OC << Port);
+  80   2                              Pn_DIR |= 1 << PinNum;
+  81   2                              Pn_PU |= 1 << PinNum;
+  82   2                      break;
+  83   2                      default:
+  84   2                              
+  85   2                      break;
+  86   2              }
+  87   1              if(Port == 0){
+  88   2                      P0_DIR = Pn_DIR;
+  89   2                      P0_PU = Pn_PU;
+  90   2              }else if(Port == 1){
+  91   2                      P1_DIR = Pn_DIR;
+  92   2                      P1_PU = Pn_PU;
+  93   2              }else if(Port == 2){
+  94   2                      P2_DIR = Pn_DIR;
+  95   2                      P2_PU = Pn_PU;
+  96   2              }else if(Port == 3){
+  97   2                      P3_DIR = Pn_DIR;
+  98   2                      P3_PU = Pn_PU;
+  99   2              }
+ 100   1      }
+ 101          
+ 102          /*******************************************************************************
+ 103          * Description    : CH559的P4端口初始化，P4默认是输入口
+ 104          * Input          : None
+ 105          * Output         : None
+ 106          * Return         : None
+ 107          *******************************************************************************/
+ 108          void GPIO_SelP4Mode(UINT8 PinNum, bit isOutput, bit isPullup){
+ 109   1              // 方向
+ 110   1              if(isOutput)
+ 111   1                      P4_DIR |= 1 << PinNum;
+ 112   1              else
+ 113   1                      P4_DIR &= ~(1 << PinNum);
+ 114   1              // 内部上拉
+ 115   1              if(isPullup)
+ 116   1                      P4_PU |= 1 << PinNum;
+C51 COMPILER V9.52.0.0   GPIO                                                              03/19/2018 18:17:07 PAGE 3   
+
+ 117   1              else
+ 118   1                      P4_PU &= ~(1 << PinNum);
+ 119   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    396    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       3
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,347 @@
+C51 COMPILER V9.52.0.0   SSD1306                                                           03/19/2018 18:17:07 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE SSD1306
+OBJECT MODULE PLACED IN SSD1306.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE SSD1306.c LARGE OPTIMIZE(9,SPEED) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "SSD1306.h"
+   2          #include "I2C.h"
+   3          #include <INTRINS.H>
+   4          #include <STRING.H>
+   5          
+   6          
+   7          static u8 xdata VRAM[1024];             // 12864的显存为1K字节
+   8          static u16 xdata tmpBuf[0x10];  // 16*2的字模缓冲区
+   9          
+  10          
+  11          // OLED的地址
+  12          #define SSD1306_ADDR            0x3C
+  13          //#define SSD1306_ADDR          0x3E
+  14          
+  15          // SSD1306指令集
+  16          // 基础指令
+  17          #define SSD1306_SET_CONTRAST_CONTROL                                    0x81
+  18          #define SSD1306_DISPLAY_ALL_ON_RESUME                                   0xA4
+  19          #define SSD1306_DISPLAY_ALL_ON                                                  0xA5
+  20          #define SSD1306_NORMAL_DISPLAY                                                  0xA6
+  21          #define SSD1306_INVERT_DISPLAY                                                  0xA7
+  22          #define SSD1306_DISPLAY_OFF                                                             0xAE
+  23          #define SSD1306_DISPLAY_ON                                                              0xAF
+  24          #define SSD1306_NOP                                                                             0xE3
+  25          // 卷轴指令
+  26          #define SSD1306_HORIZONTAL_SCROLL_RIGHT                                 0x26
+  27          #define SSD1306_HORIZONTAL_SCROLL_LEFT                                  0x27
+  28          #define SSD1306_HORIZONTAL_SCROLL_VERTICAL_AND_RIGHT    0x29
+  29          #define SSD1306_HORIZONTAL_SCROLL_VERTICAL_AND_LEFT             0x2A
+  30          #define SSD1306_DEACTIVATE_SCROLL                                               0x2E
+  31          #define SSD1306_ACTIVATE_SCROLL                                                 0x2F
+  32          #define SSD1306_SET_VERTICAL_SCROLL_AREA                                0xA3
+  33          // 寻址设置指令
+  34          #define SSD1306_SET_LOWER_COLUMN                                                0x00
+  35          #define SSD1306_SET_HIGHER_COLUMN                                               0x10
+  36          #define SSD1306_MEMORY_ADDR_MODE                                                0x20
+  37          #define SSD1306_SET_COLUMN_ADDR                                                 0x21
+  38          #define SSD1306_SET_PAGE_ADDR                                                   0x22
+  39          // 硬件配置指令
+  40          #define SSD1306_SET_START_LINE                                                  0x40
+  41          #define SSD1306_SET_SEGMENT_REMAP                                               0xA0
+  42          #define SSD1306_SET_MULTIPLEX_RATIO                                             0xA8
+  43          #define SSD1306_COM_SCAN_DIR_INC                                                0xC0
+  44          #define SSD1306_COM_SCAN_DIR_DEC                                                0xC8
+  45          #define SSD1306_SET_DISPLAY_OFFSET                                              0xD3
+  46          #define SSD1306_SET_COM_PINS                                                    0xDA
+  47          #define SSD1306_CHARGE_PUMP                                                             0x8D
+  48          // 时序和驱动方案设置指令
+  49          #define SSD1306_SET_DISPLAY_CLOCK_DIV_RATIO                             0xD5
+  50          #define SSD1306_SET_PRECHARGE_PERIOD                                    0xD9
+  51          #define SSD1306_SET_VCOM_DESELECT                                               0xDB
+  52          
+  53          
+  54          bit isPageAddressingMode = 0;
+  55          
+C51 COMPILER V9.52.0.0   SSD1306                                                           03/19/2018 18:17:07 PAGE 2   
+
+  56          
+  57          static void delay(){
+  58   1              u8 x, y;
+  59   1              for(x=0;x<0xFF;++x){
+  60   2                      for(y=0;y<0xFF;++y){
+  61   3                              _nop_();
+  62   3                      }
+  63   2              }
+  64   1      }
+  65          
+  66          static void SSD1306_SendCommand(u8 value){
+  67   1              u8 dat;
+  68   1              I2C_Start();
+  69   1              dat = 0x00;
+  70   1              I2C_Puts(SSD1306_ADDR, 0, 0, &dat, sizeof(dat));
+  71   1              dat = value;
+  72   1              I2C_Puts(SSD1306_ADDR, 0, 0, &dat, sizeof(dat));
+  73   1              I2C_Stop();
+  74   1      }
+  75          
+  76          static void SSD1306_SendData(u8 value){
+  77   1              u8 dat;
+  78   1              I2C_Start();
+  79   1              dat = 0x40;
+  80   1              I2C_Puts(SSD1306_ADDR, 0, 0, &dat, sizeof(dat));
+  81   1              dat = value;
+  82   1              I2C_Puts(SSD1306_ADDR, 0, 0, &dat, sizeof(dat));
+  83   1              I2C_Stop();
+  84   1      }
+  85          
+  86          void SSD1306_Init(){
+  87   1              // 延迟200ms。这个延迟非常重要，必须要有
+  88   1              delay();
+  89   1              SSD1306_SendCommand(SSD1306_DISPLAY_OFF);       // 0xAE
+  90   1              SSD1306_SendCommand(SSD1306_SET_DISPLAY_CLOCK_DIV_RATIO);       // 0xD5
+  91   1              SSD1306_SendCommand(0x80);
+  92   1              SSD1306_SendCommand(SSD1306_SET_MULTIPLEX_RATIO);       // 0xA8
+  93   1              SSD1306_SendCommand(0x3F);
+  94   1              SSD1306_SendCommand(SSD1306_SET_DISPLAY_OFFSET);        // 0xD3
+  95   1              SSD1306_SendCommand(0x0);
+  96   1              SSD1306_SendCommand(SSD1306_SET_START_LINE | 0x0);      // 0x40
+  97   1              SSD1306_SendCommand(SSD1306_CHARGE_PUMP);       // 0x8D
+  98   1              //SSD1306_SendCommand(0x10);    // Vcc supplied Externally
+  99   1              SSD1306_SendCommand(0x14);      // VCC Generated by Internal DC/DC Circuit
+ 100   1              SSD1306_SendCommand(SSD1306_MEMORY_ADDR_MODE);  // 0x20
+ 101   1              SSD1306_SendCommand(0x00);
+ 102   1              SSD1306_SendCommand(SSD1306_SET_SEGMENT_REMAP | 0x1);   // 0xA0|1=A1
+ 103   1              SSD1306_SendCommand(SSD1306_COM_SCAN_DIR_DEC);  // 0xC8
+ 104   1      
+ 105   1              SSD1306_SendCommand(SSD1306_SET_COM_PINS);      // 0xDA
+ 106   1              SSD1306_SendCommand(0x12);
+ 107   1      
+ 108   1              SSD1306_SendCommand(SSD1306_SET_CONTRAST_CONTROL);      // 0x81
+ 109   1              SSD1306_SendCommand(0xCF);      // 9F Vcc Externally /CF Vcc dc_dc
+ 110   1              SSD1306_SendCommand(SSD1306_SET_PRECHARGE_PERIOD);      // 0xD9
+ 111   1              SSD1306_SendCommand(0xF1);      // 0x22 vcc externally // F1 internal dc_dc
+ 112   1              SSD1306_SendCommand(SSD1306_SET_VCOM_DESELECT); // 0xDB
+ 113   1              SSD1306_SendCommand(0x40);
+ 114   1              SSD1306_SendCommand(SSD1306_DISPLAY_ALL_ON_RESUME);     // 0xA4
+ 115   1              SSD1306_SendCommand(SSD1306_NORMAL_DISPLAY);    // 0xA6
+ 116   1              SSD1306_SendCommand(SSD1306_DISPLAY_ON);        // 0xAF
+ 117   1      }
+C51 COMPILER V9.52.0.0   SSD1306                                                           03/19/2018 18:17:07 PAGE 3   
+
+ 118          
+ 119          void SSD1306_Refresh(){
+ 120   1              u8 x = 0;
+ 121   1              u16 y = 0;
+ 122   1              for(y=0;y<8;++y){
+ 123   2                      for(x=0;x<128;++x){
+ 124   3                              SSD1306_SendData(VRAM[x + (y << 7)]);
+ 125   3                      }
+ 126   2              }
+ 127   1      }
+ 128          
+ 129          void SSD1306_Clear(){
+ 130   1              memset(VRAM, 0, sizeof(VRAM));
+ 131   1      }
+ 132          
+ 133          /*
+ 134          将字符缓冲区中的字符绘制到VRAM缓冲区
+ 135          x最小取值为-fontSize，最大取值为127
+ 136          y最小取值为-fontSize，最大取值为31或63
+ 137          */
+ 138          void SSD1306_DrawChar(u8 fontSize, u16 chr, s8 x, s8 y, bit c){
+ 139   1              u8 i;
+ 140   1              s8 page = y >> 3;
+ 141   1          if(x < -fontSize)x = -fontSize;
+ 142   1          if(x > 127)return;
+ 143   1          if(y < -fontSize)y = -fontSize;
+ 144   1              if(y > 63)return;
+ 145   1              
+ 146   1              for(i=0;i<fontSize;++i){
+ 147   2                      // 如果水平方向小于0像素则不再进行绘制
+ 148   2                      if(x + i < 0)continue;
+ 149   2                      // 如果水平方向超过128像素则不再进行绘制
+ 150   2                      if(x + i < 128){
+ 151   3                              // 获得VRAM偏移量
+ 152   3                              s16 vramOffset = x + i + (page << 7);
+ 153   3                              // 获得页内偏移量
+ 154   3                              u8 offsetInPage = y & 7;
+ 155   3                              if(vramOffset >= 0){
+ 156   4                                      // 写数据
+ 157   4                                      if(c)
+ 158   4                                              VRAM[vramOffset] |= (tmpBuf[i] << offsetInPage) & 0xFF;
+ 159   4                                      else
+ 160   4                                              VRAM[vramOffset] &= ~(tmpBuf[i] << offsetInPage) & 0xFF;
+ 161   4                              }
+ 162   3                              // 偏移到下一个页
+ 163   3                              vramOffset += 128;
+ 164   3                              // 如果垂直方向超过32或64像素则不再进行绘制
+ 165   3                              if(vramOffset >= 1024)continue;
+ 166   3                              if(vramOffset >= 0){
+ 167   4                                      if(c)
+ 168   4                                              VRAM[vramOffset] |= (tmpBuf[i] >> (8 - offsetInPage)) & 0xFF;
+ 169   4                                      else
+ 170   4                                              VRAM[vramOffset] &= ~(tmpBuf[i] >> (8 - offsetInPage)) & 0xFF;
+ 171   4                              }
+ 172   3                              vramOffset += 128;
+ 173   3                              // 如果垂直方向超过32或64像素则不再进行绘制
+ 174   3                              if(vramOffset >= 1024)continue;
+ 175   3                              if(vramOffset >= 0){
+ 176   4                                      if(c)
+ 177   4                                              VRAM[vramOffset] |= (tmpBuf[i] >> (16 - offsetInPage)) & 0xFF;
+ 178   4                                      else
+ 179   4                                              VRAM[vramOffset] &= ~(tmpBuf[i] >> (16 - offsetInPage)) & 0xFF;
+C51 COMPILER V9.52.0.0   SSD1306                                                           03/19/2018 18:17:07 PAGE 4   
+
+ 180   4                              }
+ 181   3                      }
+ 182   2              }
+ 183   1      }
+*** WARNING C280 IN LINE 138 OF SSD1306.c: 'chr': unreferenced local variable
+ 184          
+ 185          void SSD1306_DrawString(u8 fontSize, const char* str, s16 x, s16 y, bit c){
+ 186   1              
+ 187   1      }
+*** WARNING C280 IN LINE 185 OF SSD1306.c: 'fontSize': unreferenced local variable
+*** WARNING C280 IN LINE 185 OF SSD1306.c: 'str': unreferenced local variable
+*** WARNING C280 IN LINE 185 OF SSD1306.c: 'x': unreferenced local variable
+*** WARNING C280 IN LINE 185 OF SSD1306.c: 'y': unreferenced local variable
+*** WARNING C280 IN LINE 185 OF SSD1306.c: 'c': unreferenced local variable
+ 188          
+ 189          /*
+ 190          在缓冲区任意位置画点
+ 191          */
+ 192          void SSD1306_DrawPixel(u8 x, u8 y, bit c){
+ 193   1              if(x > 127)return;
+ 194   1              if(y > 63)return;
+ 195   1              if(c)
+ 196   1                      VRAM[x + (y >> 3 << 7)] |= 1 << (y & 7);
+ 197   1              else
+ 198   1                      VRAM[x + (y >> 3 << 7)] &= ~(1 << (y & 7));
+ 199   1      }
+ 200          
+ 201          /*
+ 202          在缓冲区任意位置画直线
+ 203          */
+ 204          #ifndef ABS
+ 205          #define ABS(a)  ((a) > 0 ? (a) : -(a))
+ 206          #endif
+ 207          void SSD1306_DrawLine(u8 x0, u8 y0, u8 x1, u8 y1, bit c){
+ 208   1              s8 dx = x1 - x0;
+ 209   1              s8 dy = y1 - y0;
+ 210   1              s8 ux = ((dx > 0) << 1) - 1;    // x的增量方向，正负1
+ 211   1              s8 uy = ((dy > 0) << 1) - 1;    // y的增量方向，正负1
+ 212   1              s8 x = x0, y = y0, eps = 0;             // eps为累加误差
+ 213   1      
+ 214   1              dx = ABS(dx);
+ 215   1              dy = ABS(dy); 
+ 216   1              if(dx > dy){
+ 217   2                      for(;x!=x1;x+=ux){
+ 218   3                              SSD1306_DrawPixel(x, y, c);
+ 219   3                              eps += dy;
+ 220   3                              if((eps << 1) >= dx){
+ 221   4                                      y += uy;
+ 222   4                                      eps -= dx;
+ 223   4                              }
+ 224   3                      }
+ 225   2              }else{
+ 226   2                      for(;y!=y1;y+=uy){
+ 227   3                              SSD1306_DrawPixel(x, y, c);
+ 228   3                              eps += dx;
+ 229   3                              if((eps << 1) >= dy){
+ 230   4                                      x += ux;
+ 231   4                                      eps -= dy;
+ 232   4                              }
+ 233   3                      }
+ 234   2              }
+ 235   1      }
+C51 COMPILER V9.52.0.0   SSD1306                                                           03/19/2018 18:17:07 PAGE 5   
+
+ 236          
+ 237          /*
+ 238          在缓冲区任意位置填充矩形
+ 239          */
+ 240          void SSD1306_FillRect(u8 x, u8 y, u8 w, u8 h, bit c){
+ 241   1              u8 i, j;
+ 242   1              if(x > 127)return;
+ 243   1              if(x + w > 128)w = 128 - x;
+ 244   1              if(y > 63)return;
+ 245   1              if(y + h > 64)h = 64 - y;
+ 246   1              
+ 247   1              for(i=x;i<=x+w-1;++i){
+ 248   2                      u8 page0 = y >> 3;
+ 249   2                      u8 page1 = (y + h) >> 3;
+ 250   2                      u8 _y0 = y & 7;
+ 251   2                      u8 _y1 = (y + h - 1) & 7;
+ 252   2                      if(page0 == page1){
+ 253   3                              u8 mask = 0;
+ 254   3                              for(j=_y0;j<=_y1;++j){
+ 255   4                                      mask |= (1 << j);
+ 256   4                              }
+ 257   3                              if(c){
+ 258   4                                      VRAM[i + (page0 << 7)] |= mask;
+ 259   4                              }else{
+ 260   4                                      VRAM[i + (page0 << 7)] &= ~mask;
+ 261   4                              }
+ 262   3                      }else{
+ 263   3                              for(j=page0;j<=page1;++j){
+ 264   4                                      if(j == page0){
+ 265   5                                              if(c)
+ 266   5                                                      VRAM[i + (j << 7)] |= (0xFF << _y0);
+ 267   5                                              else
+ 268   5                                                      VRAM[i + (j << 7)] &= ~(0xFF << _y0);
+ 269   5                                      }else if(j == page1){
+ 270   5                                              if(c)
+ 271   5                                                      VRAM[i + (j << 7)] |= (0xFF >> (7 - _y1));
+ 272   5                                              else
+ 273   5                                                      VRAM[i + (j << 7)] &= ~(0xFF >> (7 - _y1));
+ 274   5                                      }else{
+ 275   5                                              if(c)
+ 276   5                                                      VRAM[i + (j << 7)] = 0xFF;
+ 277   5                                              else
+ 278   5                                                      VRAM[i + (j << 7)] = 0;
+ 279   5                                      }
+ 280   4                              }
+ 281   3                      }
+ 282   2              }
+ 283   1      }
+ 284          
+ 285          /*
+ 286          在缓冲区任意位置画圆
+ 287          */
+ 288          void SSD1306_DrawCircle(u8 x1, u8 y1, u8 r, bit c){
+ 289   1              s16 x = 0, y = r;
+ 290   1              s8 d = 1 - r;
+ 291   1              while(y > x){
+ 292   2                      SSD1306_DrawPixel(x1 + x, y1 + y, c);
+ 293   2                      SSD1306_DrawPixel(x1 + y, y1 + x, c);
+ 294   2                      SSD1306_DrawPixel(x1 - x, y1 + y, c);
+ 295   2                      SSD1306_DrawPixel(x1 - y, y1 + x, c);
+ 296   2                      SSD1306_DrawPixel(x1 - x, y1 - y, c);
+ 297   2                      SSD1306_DrawPixel(x1 - y, y1 - x, c);
+C51 COMPILER V9.52.0.0   SSD1306                                                           03/19/2018 18:17:07 PAGE 6   
+
+ 298   2                      SSD1306_DrawPixel(x1 + x, y1 - y, c);
+ 299   2                      SSD1306_DrawPixel(x1 + y, y1 - x, c);
+ 300   2                      if(d < 0){
+ 301   3                              d += 2 * x + 3;
+ 302   3                      }else{
+ 303   3                              d += 2 * (x - y) + 5;
+ 304   3                              y--;
+ 305   3                      }
+ 306   2                      x++;
+ 307   2              }
+ 308   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2143    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   1056      50
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1       6
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  6 WARNING(S),  0 ERROR(S)

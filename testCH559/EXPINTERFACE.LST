@@ -1,0 +1,393 @@
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/19/2018 18:17:07 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE EXPINTERFACE
+OBJECT MODULE PLACED IN EXPINTERFACE.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE EXPINTERFACE.c LARGE OPTIMIZE(9,SPEED) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "EXPINTERFACE.h"
+   2          #include "GPIO.h"
+   3          #include "KEYBOARD.h"
+   4          
+   5          
+   6          // 根据NO$NES文档的说明，老版FC的手柄是不可取下的，所以第三方手柄只能插到扩展口。
+   7          // 但是扩展口缺少J1D0信号，所以第三方手柄只能作为2P手柄，或者3P/4P手柄。
+   8          // 引用原文：the 15pin connector lacks the joypad 1 signal, so at best, they could be shortcut with the jo
+             -ypad 2 signal, or wired as joypad 3/4; aside from 3/4-player games, many 1/2-player games also support that kind of inpu
+             -t
+   9          // 注意关键词，外接的第三方手柄，是可以作为2P手柄的！
+  10          // 再考虑到新版FC的两个手柄都是可以拔下来的，可以得出如下结论：
+  11          // 1. J1D0和J2D0这两个端口允许悬空，且悬空等效于高电平（无按键按下）。
+  12          // 可见这两个端口内部有上拉电阻。
+  13          // 2. 手柄的DATA输出端是开漏输出结构，且有上拉电阻。否则当两个2P手柄输出不同电平的时候就会烧芯片。
+  14          // 因为只有开漏才可以实现“线与”，其他输出结构的GPIO不能直接把两个设备并联在一起。
+  15          // 基于以上结论，J1D0和J2D0这两个端口可以不用上拉电阻。
+  16          // 再根据FC电路图，验证了我的推断。J1D0~J1D1、J2D0~J2D4都有上拉电阻，因此这里可以不使用上拉。
+  17          /*
+  18          OUT0    Port -> MCU             高阻输入                                P2.5
+  19          OUT1    Port -> MCU             高阻输入                                P2.6
+  20          OUT2    Port -> MCU             高阻输入                                P2.7
+  21          
+  22          J1CLK   Port -> MCU             高阻输入                                P4.6（不可位寻址）
+  23          J1D0    MCU -> Port             开漏输出，无上拉                P3.2
+  24          J1D1    MCU -> Port             开漏输出，无上拉                P3.4
+  25          J1D2    NC
+  26          J1D3    NC
+  27          J1D4    NC
+  28          
+  29          J2CLK   Port -> MCU             高阻输入                                P4.7（不可位寻址）
+  30          J2D0    MCU -> Port             开漏输出，无上拉                P1.2
+  31          J2D1    MCU -> Port             开漏输出，无上拉                P1.4
+  32          J2D2    MCU -> Port             开漏输出，无上拉                P1.5
+  33          J2D3    MCU -> Port             开漏输出，无上拉                P1.6
+  34          J2D4    MCU -> Port             开漏输出，无上拉                P1.7
+  35          */
+  36          sbit OUT0 = P2^5;
+  37          sbit OUT1 = P2^6;
+  38          sbit OUT2 = P2^7;
+  39          sbit J1D0 = P3^2;
+  40          sbit J1D1 = P3^4;
+  41          sbit J2D0 = P1^2;
+  42          sbit J2D1 = P1^4;
+  43          sbit J2D2 = P1^5;
+  44          sbit J2D3 = P1^6;
+  45          sbit J2D4 = P1^7;
+  46          #define JOYCLK  P4_IN
+  47          
+  48          static u8 data keyValue_1P;
+  49          static u8 data keyValue_2P;
+  50          static u8 data keyValue_3P;
+  51          static u8 data keyValue_4P;
+  52          static u8 data keyValue_Keyboard;
+  53          
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/19/2018 18:17:07 PAGE 2   
+
+  54          static u8 data Register_1P = 0; // 1P手柄寄存器
+  55          static u8 data Register_2P = 0; // 2P手柄寄存器
+  56          static u8 data Register_3P = 0; // 3P手柄寄存器
+  57          static u8 data Register_4P = 0; // 4P手柄寄存器
+  58          
+  59          bit OUT0_curr = 0;
+  60          bit OUT1_curr = 0;
+  61          bit OUT2_curr = 0;
+  62          bit J1CLK_curr = 0;
+  63          bit J2CLK_curr = 0;
+  64          bit OUT0_prev = 0;
+  65          bit OUT1_prev = 0;
+  66          bit OUT2_prev = 0;
+  67          bit J1CLK_prev = 0;
+  68          bit J2CLK_prev = 0;
+  69          
+  70          bit isReady = 0;        // 是否检测到了锁存信号
+  71          
+  72          
+  73          static void EXPINTERFACE_RefreshOUT0() small{
+  74   1              OUT0_curr = OUT0;
+  75   1      }
+  76          static bit EXPINTERFACE_IsRisingEdgeOfOUT0() small{
+  77   1              return OUT0_curr == 1 && OUT0_prev == 0;
+  78   1      }
+  79          static bit EXPINTERFACE_IsFallingEdgeOfOUT0() small{
+  80   1              return OUT0_curr == 0 && OUT0_prev == 1;
+  81   1      }
+  82          static void EXPINTERFACE_UpdateOUT0() small{
+  83   1              OUT0_prev = OUT0_curr;
+  84   1      }
+  85          
+  86          static void EXPINTERFACE_RefreshJ1CLK() small{
+  87   1              J1CLK_curr = (JOYCLK >> 6) & 1;
+  88   1      }
+  89          static bit EXPINTERFACE_IsRisingEdgeOfJ1CLK() small{
+  90   1              return J1CLK_curr == 1 && J1CLK_prev == 0;
+  91   1      }
+  92          static bit EXPINTERFACE_IsFallingEdgeOfJ1CLK() small{
+  93   1              return J1CLK_curr == 0 && J1CLK_prev == 1;
+  94   1      }
+  95          static void EXPINTERFACE_UpdateJ1CLK() small{
+  96   1              J1CLK_prev = J1CLK_curr;
+  97   1      }
+  98          
+  99          static void EXPINTERFACE_RefreshJ2CLK() small{
+ 100   1              J2CLK_curr = (JOYCLK >> 7) & 1;
+ 101   1      }
+ 102          static bit EXPINTERFACE_IsRisingEdgeOfJ2CLK() small{
+ 103   1              return J2CLK_curr == 1 && J2CLK_prev == 0;
+ 104   1      }
+ 105          static bit EXPINTERFACE_IsFallingEdgeOfJ2CLK() small{
+ 106   1              return J2CLK_curr == 0 && J2CLK_prev == 1;
+ 107   1      }
+ 108          static void EXPINTERFACE_UpdateJ2CLK() small{
+ 109   1              J2CLK_prev = J2CLK_curr;
+ 110   1      }
+ 111          
+ 112          // 读键码缓冲区，设置1P按键状态
+ 113          static void EXPINTERFACE_Set1PKeyStatus() small{
+ 114   1              u8 i = 0;
+ 115   1              // A、B、Start、Select、Up、Down、Left、Right
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/19/2018 18:17:07 PAGE 3   
+
+ 116   1              static const u8 code p[] = {0x07, 0x04, 0x16, 0x1A, 0x2C, 0x28, 0x0D, 0x0E};
+ 117   1              u8* keyCodeBuf = KEYBOARD_GetBuf();
+ 118   1              keyValue_1P = 0;
+ 119   1              for(i=0;i<8;++i){
+ 120   2                      keyValue_1P |= keyCodeBuf[p[i]];
+ 121   2                      keyValue_1P <<= 1;
+ 122   2              }
+ 123   1      }
+ 124          
+ 125          // 读键码缓冲区，设置2P按键状态
+ 126          static void EXPINTERFACE_Set2PKeyStatus() small{
+ 127   1              u8 i = 0;
+ 128   1              // A、B、Start、Select、Up、Down、Left、Right
+ 129   1              static const u8 code p[] = {0x4F, 0x50, 0x51, 0x52, 0x62, 0x58, 0x59, 0x5A};
+ 130   1              u8* keyCodeBuf = KEYBOARD_GetBuf();
+ 131   1              keyValue_2P = 0;
+ 132   1              for(i=0;i<8;++i){
+ 133   2                      keyValue_2P |= keyCodeBuf[p[i]];
+ 134   2                      keyValue_2P <<= 1;
+ 135   2              }
+ 136   1      }
+ 137          
+ 138          // 读键码缓冲区，设置3P按键状态
+ 139          static void EXPINTERFACE_Set3PKeyStatus() small{
+ 140   1              u8 i = 0;
+ 141   1              // A、B、Start、Select、Up、Down、Left、Right
+ 142   1              static const u8 code p[] = {0x07, 0x04, 0x16, 0x1A, 0x2C, 0x28, 0x0D, 0x0E};
+ 143   1              u8* keyCodeBuf = KEYBOARD_GetBuf();
+ 144   1              keyValue_3P = 0;
+ 145   1              for(i=0;i<8;++i){
+ 146   2                      keyValue_3P |= keyCodeBuf[p[i]];
+ 147   2                      keyValue_3P <<= 1;
+ 148   2              }
+ 149   1      }
+ 150          
+ 151          // 读键码缓冲区，设置4P按键状态
+ 152          static void EXPINTERFACE_Set4PKeyStatus() small{
+ 153   1              u8 i = 0;
+ 154   1              // A、B、Start、Select、Up、Down、Left、Right
+ 155   1              static const u8 code p[] = {0x4F, 0x50, 0x51, 0x52, 0x62, 0x58, 0x59, 0x5A};
+ 156   1              u8* keyCodeBuf = KEYBOARD_GetBuf();
+ 157   1              keyValue_4P = 0;
+ 158   1              for(i=0;i<8;++i){
+ 159   2                      keyValue_4P |= keyCodeBuf[p[i]];
+ 160   2                      keyValue_4P <<= 1;
+ 161   2              }
+ 162   1      }
+ 163          
+ 164          // 初始化所有GPIO。参数代表是否启用该设备
+ 165          void EXPINTERFACE_Init(bit isEnable) small{
+ 166   1              u8 i = 0;
+ 167   1              if(isEnable){
+ 168   2                      // P1口设置成开漏输出，无上拉
+ 169   2                      for(i=0;i<8;++i)GPIO_SelMode(1, 3, i);
+ 170   2                      // P2口设置成高阻输入，无上拉
+ 171   2                      for(i=0;i<8;++i)GPIO_SelMode(2, 0, i);
+ 172   2                      // P3口设置成开漏输出，无上拉
+ 173   2                      for(i=0;i<8;++i)GPIO_SelMode(3, 3, i);
+ 174   2                      // P4口设置成高阻输入，无上拉
+ 175   2                      for(i=0;i<8;++i)GPIO_SelP4Mode(i, 0, 0);
+ 176   2              }else{
+ 177   2                      // P1口设置成高阻输入，无上拉
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/19/2018 18:17:07 PAGE 4   
+
+ 178   2                      for(i=0;i<8;++i)GPIO_SelMode(1, 0, i);
+ 179   2                      // P2口设置成高阻输入，无上拉
+ 180   2                      for(i=0;i<8;++i)GPIO_SelMode(2, 0, i);
+ 181   2                      // P3口设置成高阻输入，无上拉
+ 182   2                      for(i=0;i<8;++i)GPIO_SelMode(3, 0, i);
+ 183   2                      // P4口设置成高阻输入，无上拉
+ 184   2                      for(i=0;i<8;++i)GPIO_SelP4Mode(i, 0, 0);
+ 185   2              }
+ 186   1              // P1~P4口驱动能力为5mA
+ 187   1              GPIO_DrivCap(1, 0);
+ 188   1              GPIO_DrivCap(2, 0);
+ 189   1              GPIO_DrivCap(3, 0);
+ 190   1              GPIO_DrivCap(4, 0);
+ 191   1      }
+ 192          
+ 193          // 初始化Mode0。在这种模式下，USB功能完全被屏蔽，所有端口均为高阻
+ 194          void EXPINTERFACE_InitMode0() small{
+ 195   1              EXPINTERFACE_Init(0);
+ 196   1      }
+ 197          
+ 198          void EXPINTERFACE_UpdateMode0() small{
+ 199   1              
+ 200   1      }
+ 201          
+ 202          // 初始化Mode1。在这种模式下，USB键盘被视为1P和2P手柄。
+ 203          // 注意，如果真实1P手柄和键盘虚拟1P手柄（或真实2P手柄和键盘虚拟2P手柄）共存的话，
+ 204          // 只要有其中一个手柄输出低电平键值（键按下），则另一个手柄不管是什么电平，都会被拉低。
+ 205          // 这就导致了两个手柄的同键值按键是“或”关系，即只要有一个手柄按键按下，那个按键就会被视为按下。
+ 206          // 由此可见，虚拟1P2P手柄可以和真实手柄共存，同时工作。
+ 207          void EXPINTERFACE_InitMode1() small{
+ 208   1              EXPINTERFACE_Init(1);
+ 209   1              Register_1P = 0;
+ 210   1              Register_2P = 0;
+ 211   1              OUT0_curr = 0;
+ 212   1              J1CLK_curr = 0;
+ 213   1              J2CLK_curr = 0;
+ 214   1              OUT0_prev = 0;
+ 215   1              J1CLK_prev = 0;
+ 216   1              J2CLK_prev = 0;
+ 217   1              
+ 218   1              isReady = 0;
+ 219   1      }
+ 220          
+ 221          void EXPINTERFACE_UpdateMode1() small{
+ 222   1              // 获得1P和2P按键状态
+ 223   1              EXPINTERFACE_Set1PKeyStatus();
+ 224   1              EXPINTERFACE_Set2PKeyStatus();
+ 225   1              // 读OUT0（锁存信号）
+ 226   1              EXPINTERFACE_RefreshOUT0();
+ 227   1              // 读J1CLK（1P时钟）
+ 228   1              EXPINTERFACE_RefreshJ1CLK();
+ 229   1              // 读J2CLK（2P时钟）
+ 230   1              EXPINTERFACE_RefreshJ2CLK();
+ 231   1              
+ 232   1              // 检测是否出现锁存信号
+ 233   1              if(EXPINTERFACE_IsRisingEdgeOfOUT0()){
+ 234   2                      // 出现锁存信号！允许后续逻辑
+ 235   2                      isReady = 1;
+ 236   2              }
+ 237   1              if(isReady){
+ 238   2                      // 检测是否结束锁存
+ 239   2                      if(EXPINTERFACE_IsFallingEdgeOfOUT0()){
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/19/2018 18:17:07 PAGE 5   
+
+ 240   3                              // 锁存信号结束！把按键状态锁存到两个手柄寄存器中
+ 241   3                              Register_1P = keyValue_1P;
+ 242   3                              Register_2P = keyValue_2P;
+ 243   3                              // 锁存的键值立刻出现在串行数据端
+ 244   3                              J1D0 = Register_1P & 1;
+ 245   3                              J2D0 = Register_2P & 1;
+ 246   3                              // 进入下一个状态。在这之后，按键状态不再影响已被锁存的按键寄存器
+ 247   3                      }
+ 248   2                      // 检测是否出现1P时钟上升沿
+ 249   2                      if(EXPINTERFACE_IsRisingEdgeOfJ1CLK()){
+ 250   3                              // 1P手柄寄存器移位
+ 251   3                              Register_1P <<= 1;
+ 252   3                              // 锁存的键值立刻出现在串行数据端
+ 253   3                              J1D0 = Register_1P & 1;
+ 254   3                              // 进入下一个状态
+ 255   3                      }
+ 256   2                      // 检测是否出现1P时钟下降沿
+ 257   2                      if(EXPINTERFACE_IsFallingEdgeOfJ1CLK()){
+ 258   3                              // 这个状态下没什么可做的
+ 259   3                      }
+ 260   2                      // 检测是否出现2P时钟上升沿
+ 261   2                      if(EXPINTERFACE_IsRisingEdgeOfJ2CLK()){
+ 262   3                              // 2P手柄寄存器移位
+ 263   3                              Register_2P <<= 1;
+ 264   3                              // 锁存的键值立刻出现在串行数据端
+ 265   3                              J2D0 = Register_2P & 1;
+ 266   3                              // 进入下一个状态
+ 267   3                      }
+ 268   2                      // 检测是否出现2P时钟下降沿
+ 269   2                      if(EXPINTERFACE_IsFallingEdgeOfJ2CLK()){
+ 270   3                              // 这个状态下没什么可做的
+ 271   3                      }
+ 272   2              }
+ 273   1              
+ 274   1              // 更新锁存信号状态
+ 275   1              EXPINTERFACE_UpdateOUT0();
+ 276   1              // 更新1P时钟信号状态
+ 277   1              EXPINTERFACE_UpdateJ1CLK();
+ 278   1              // 更新2P时钟信号状态
+ 279   1              EXPINTERFACE_UpdateJ2CLK();
+ 280   1      }
+ 281          
+ 282          // 初始化Mode2。在这种模式下，USB键盘被视为3P和4P手柄。
+ 283          void EXPINTERFACE_InitMode2() small{
+ 284   1              EXPINTERFACE_Init(1);
+ 285   1              Register_3P = 0;
+ 286   1              Register_4P = 0;
+ 287   1              OUT0_curr = 0;
+ 288   1              J1CLK_curr = 0;
+ 289   1              J2CLK_curr = 0;
+ 290   1              OUT0_prev = 0;
+ 291   1              J1CLK_prev = 0;
+ 292   1              J2CLK_prev = 0;
+ 293   1              
+ 294   1              isReady = 0;
+ 295   1      }
+ 296          
+ 297          void EXPINTERFACE_UpdateMode2() small{
+ 298   1              // 获得3P和4P按键状态
+ 299   1              EXPINTERFACE_Set3PKeyStatus();
+ 300   1              EXPINTERFACE_Set4PKeyStatus();
+ 301   1              // 读OUT0（锁存信号）
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/19/2018 18:17:07 PAGE 6   
+
+ 302   1              EXPINTERFACE_RefreshOUT0();
+ 303   1              // 读J1CLK（3P时钟）
+ 304   1              EXPINTERFACE_RefreshJ1CLK();
+ 305   1              // 读J2CLK（4P时钟）
+ 306   1              EXPINTERFACE_RefreshJ2CLK();
+ 307   1              
+ 308   1              // 检测是否出现锁存信号
+ 309   1              if(EXPINTERFACE_IsRisingEdgeOfOUT0()){
+ 310   2                      // 出现锁存信号！允许后续逻辑
+ 311   2                      isReady = 1;
+ 312   2              }
+ 313   1              if(isReady){
+ 314   2                      // 检测是否结束锁存
+ 315   2                      if(EXPINTERFACE_IsFallingEdgeOfOUT0()){
+ 316   3                              // 锁存信号结束！把按键状态锁存到两个手柄寄存器中
+ 317   3                              Register_3P = keyValue_3P;
+ 318   3                              Register_4P = keyValue_4P;
+ 319   3                              // 锁存的键值立刻出现在串行数据端
+ 320   3                              J1D1 = Register_3P & 1;
+ 321   3                              J2D1 = Register_4P & 1;
+ 322   3                              // 进入下一个状态。在这之后，按键状态不再影响已被锁存的按键寄存器
+ 323   3                      }
+ 324   2                      // 检测是否出现3P时钟上升沿
+ 325   2                      if(EXPINTERFACE_IsRisingEdgeOfJ1CLK()){
+ 326   3                              // 3P手柄寄存器移位
+ 327   3                              Register_3P <<= 1;
+ 328   3                              // 锁存的键值立刻出现在串行数据端
+ 329   3                              J1D1 = Register_3P & 1;
+ 330   3                              // 进入下一个状态
+ 331   3                      }
+ 332   2                      // 检测是否出现3P时钟下降沿
+ 333   2                      if(EXPINTERFACE_IsFallingEdgeOfJ1CLK()){
+ 334   3                              // 这个状态下没什么可做的
+ 335   3                      }
+ 336   2                      // 检测是否出现4P时钟上升沿
+ 337   2                      if(EXPINTERFACE_IsRisingEdgeOfJ2CLK()){
+ 338   3                              // 4P手柄寄存器移位
+ 339   3                              Register_4P <<= 1;
+ 340   3                              // 锁存的键值立刻出现在串行数据端
+ 341   3                              J2D1 = Register_4P & 1;
+ 342   3                              // 进入下一个状态
+ 343   3                      }
+ 344   2                      // 检测是否出现4P时钟下降沿
+ 345   2                      if(EXPINTERFACE_IsFallingEdgeOfJ2CLK()){
+ 346   3                              // 这个状态下没什么可做的
+ 347   3                      }
+ 348   2              }
+ 349   1              
+ 350   1              // 更新锁存信号状态
+ 351   1              EXPINTERFACE_UpdateOUT0();
+ 352   1              // 更新3P时钟信号状态
+ 353   1              EXPINTERFACE_UpdateJ1CLK();
+ 354   1              // 更新4P时钟信号状态
+ 355   1              EXPINTERFACE_UpdateJ2CLK();
+ 356   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    670    ----
+   CONSTANT SIZE    =     32    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/19/2018 18:17:07 PAGE 7   
+
+   DATA SIZE        =      9      13
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =     11       1
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

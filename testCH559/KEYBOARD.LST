@@ -1,0 +1,83 @@
+C51 COMPILER V9.52.0.0   KEYBOARD                                                          03/19/2018 18:17:06 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE KEYBOARD
+OBJECT MODULE PLACED IN KEYBOARD.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE KEYBOARD.C LARGE OPTIMIZE(9,SPEED) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "KEYBOARD.h"
+   2          #include <STRING.h>
+   3          
+   4          
+   5          #define KEY_CODE_BUF_SIZE       (32 + 1)
+   6          // 256+8个键码缓冲区，用于指示256个按键+8个控制键（左右Ctrl、左右Shift、左右Alt、左右Win）的状态。每个按键
+             -占1bit
+   7          // 在这里，8个控制键的键值分别是：左Ctrl 0x100，左Shift 0x101，左Alt 0x102，左Win 0x103，右Ctrl 0x104，右S
+             -hift 0x105，右Alt 0x106，右Win 0x107
+   8          static u8 xdata keyCodeState[KEY_CODE_BUF_SIZE];
+   9          // 上一帧的键码缓冲区
+  10          static u8 xdata keyCodePrevState[KEY_CODE_BUF_SIZE];
+  11          
+  12          
+  13          // 解析键盘数据包，刷新键码缓冲区
+  14          void KEYBOARD_Refresh(u8* buf) small{
+  15   1              u8 i = 0;
+  16   1              // 先把上一帧的按键状态备份
+  17   1              memcpy(keyCodePrevState, keyCodeState, KEY_CODE_BUF_SIZE * sizeof(u8));
+  18   1              // 数据包共8字节，第0字节为8个控制键的状态
+  19   1              keyCodeState[KEY_CODE_BUF_SIZE - 1] = buf[0];
+  20   1              // 所有键码复位
+  21   1              memset(keyCodeState, 0, KEY_CODE_BUF_SIZE * sizeof(u8));
+  22   1              // 第2到第7字节为键值
+  23   1              for(i = 2;i < 8;++i){
+  24   2                      if(buf[i] != 0){
+  25   3                              u8 bank = buf[i] >> 3;
+  26   3                              u8 offs = buf[i] & 7;
+  27   3                              keyCodeState[bank] |= (1 << offs);
+  28   3                      }
+  29   2              }
+  30   1      }
+  31          
+  32          // 某键是否按下（上一帧未按，当前帧按下）
+  33          bit KEYBOARD_IsKeyDown(u8 keyCode) small{
+  34   1              u8 bank = keyCode >> 3;
+  35   1              u8 offs = keyCode & 7;
+  36   1              return ~keyCodePrevState[bank] & keyCodeState[bank] & (1 << offs);
+  37   1      }
+  38          
+  39          // 某键是否松开（上一帧按下，当前帧未按下）
+  40          bit KEYBOARD_IsKeyUp(u8 keyCode) small{
+  41   1              u8 bank = keyCode >> 3;
+  42   1              u8 offs = keyCode & 7;
+  43   1              return keyCodePrevState[bank] & ~keyCodeState[bank] & (1 << offs);
+  44   1      }
+  45          
+  46          // 某键是否按住
+  47          bit KEYBOARD_IsKeyHold(u8 keyCode) small{
+  48   1              u8 bank = keyCode >> 3;
+  49   1              u8 offs = keyCode & 7;
+  50   1              return keyCodeState[bank] & (1 << offs);
+  51   1      }
+  52          
+  53          // 获得键码缓冲区
+C51 COMPILER V9.52.0.0   KEYBOARD                                                          03/19/2018 18:17:06 PAGE 2   
+
+  54          u8* KEYBOARD_GetBuf() small{
+  55   1              return keyCodeState;
+  56   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    257    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     66    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

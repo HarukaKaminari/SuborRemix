@@ -1,0 +1,395 @@
+C51 COMPILER V9.52.0.0   I2C                                                               03/19/2018 18:17:07 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE I2C
+OBJECT MODULE PLACED IN I2C.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE I2C.c LARGE OPTIMIZE(9,SPEED) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include <INTRINS.h>
+   2          #include <stdio.h>
+   3          #include "I2C.h"
+   4          #include <CH559.h>
+   5          #include "GPIO.h"
+   6          
+   7          
+   8          /*
+   9                  I2C.c
+  10                  ±ê×¼80C51µ¥Æ¬»úÄ£ÄâI2C×ÜÏßµÄÖ÷»ú³ÌÐò
+  11                  ±¾³ÌÐò½ö¹©Ñ§Ï°²Î¿¼£¬²»Ìá¹©ÈÎºÎ¿É¿¿ÐÔ·½ÃæµÄµ£±££»ÇëÎðÓÃÓÚÉÌÒµÄ¿µÄ
+  12          ËµÃ÷£º
+  13                  ÕâÊÇÒ»¸öÓÃC51Ä£ÄâI2C×ÜÏßÐ­ÒéµÄ¾«¼ò°æ±¾
+  14                  Ö»¿¼ÂÇÒ»Ö÷¶à´ÓÄ£Ê½£¬²»¿¼ÂÇ¶àÖ÷Ä£Ê½
+  15                  ²»¿¼ÂÇI2C×ÜÏßÐ­ÒéÖÐµÄÊ±ÖÓÍ¬²½ÎÊÌâ
+  16                  ÒªÏë¸üÇå³þµØÁË½â±¾³ÌÐòµÄÏ¸½Ú£¬Çë²Î¿¼Philips¹«Ë¾µÄÏà¹ØÐ­Òé±ê×¼
+  17          ÓÃ·¨£º
+  18                  1. ½«ÎÄ¼þI2C.hºÍI2C.cÒ»Æð¸´ÖÆµ½ÄúµÄ¹¤³ÌÎÄ¼þ¼ÐÏÂ
+  19                  2. ¸ù¾ÝÊµ¼Êµ¥Æ¬»úµÄÐÍºÅ£¬¸ü»»SFRµÄÍ·ÎÄ¼þ<reg52.h>
+  20                  3. ¸ù¾ÝÊµ¼ÊµçÂ·£¬ÐÞ¸ÄI2C×ÜÏßÁ½¸ùÐÅºÅÏßSCLºÍSDAµÄ¶¨Òå
+  21                  4. Í¨¹ýºê¶¨ÒåI2C_DELAY_VALUEµ÷ÕûI2C×ÜÏßµÄËÙ¶ÈÊ¹Æä·ûºÏÊµ¼ÊÐèÒª
+  22                  5. °ÑÎÄ¼þI2C.cÌí¼Ó½ø¹¤³ÌÖÐ£¬ÔÚÐèÒªµÄµØ·½°üº¬Í·ÎÄ¼þI2C.h
+  23                  6. ÔÚmain()º¯ÊýµÄ¿ªÊ¼´¦£¬Òªµ÷ÓÃÒ»´Î³õÊ¼»¯º¯ÊýI2C_Init()
+  24                  7. I2C_Puts()ºÍI2C_Gets()ÊÇI2C×ÜÏß×ÛºÏ¶ÁÐ´º¯Êý£¬Çë¿´Çå×¢ÊÍºóÔÙÊ¹ÓÃ
+  25                  8. ËùÓÐÈ«¾ÖÐÔÖÊµÄ±êÊ¶·û¶¼ÒÔI2C_¿ªÍ·£¬¿ÉÓÐÐ§±ÜÃâÃüÃû³åÍ»ÎÊÌâ
+  26                  9. ×¢Òâ£º´Ó»úµØÖ·²ÉÓÃ7Î»´¿µØÖ·±íÊ¾£¬²»º¬¶ÁÐ´Î»£¬¼´×î¸ßÎ»ÎÞÐ§
+  27          */
+  28          
+  29          // ¶¨ÒåI2C×ÜÏßÊ±ÖÓµÄÑÓÊ±Öµ£¬Òª¸ù¾ÝÊµ¼ÊÇé¿öÐÞ¸Ä£¬È¡Öµ1¡«255
+  30          // 1Tµ¥Æ¬»ú@30MHzÖ÷ÆµÏÂ£¬Ö»ÒªÕâ¸öÖµ³¬¹ý33£¬ÄÇÃ´ÑÓÊ±Ê±¼ä¾Í³¬¹ýÁË4.7uS
+  31          // ¿¼ÂÇµ½1Tµ¥Æ¬»úIO¿Ú¿ÉÄÜÀ´²»¼°·´Ó¦±äÁ¿µÄ¸Ä±ä£¬ÒÔ¼°Æ÷¼þµçÈÝºÍ·Ö²¼µçÈÝÔì³ÉµÄ²¨ÐÎ±ßÔµ²»¶¸ÇÍ£¬Õâ¸öÖµÓ¦¸ÃÂÔ´óÓ
+             -Ú¼ÆËãÖµ
+  32          #define I2C_DELAY_VALUE         64
+  33          
+  34          // ¶¨ÒåI2C×ÜÏßÍ£Ö¹ºóÔÚÏÂÒ»´Î¿ªÊ¼Ö®Ç°µÄµÈ´ýÊ±¼ä£¬È¡Öµ1¡«65535
+  35          // µÈ´ýÊ±¼äÎª(I2C_STOP_WAIT_VALUE*5)/Ö÷ÆµuS
+  36          // ¶ÔÓÚ¶àÊýÆ÷¼þÈ¡ÖµÎª1¼´¿É£»µ«¶ÔÓÚÄ³Ð©Æ÷¼þÀ´Ëµ£¬½Ï³¤µÄÑÓÊ±ÊÇ±ØÐëµÄ
+  37          #define I2C_STOP_WAIT_VALUE             1
+  38          
+  39          // ¶¨ÒåI2CÖ÷»úµÈ´ý´Ó»úÏìÓ¦µÄ³¬Ê±Ê±¼ä£¬È¡Öµ1~65535
+  40          #define I2C_WAIT_ACK_TIMEOUT    255
+  41          
+  42          
+  43          // Ä£ÄâI2C×ÜÏßµÄÒý½Å¶¨Òå
+  44          sbit I2C_SCL = P0^2;
+  45          sbit I2C_SDA = P0^3;
+  46          
+  47          
+  48          /*
+  49          º¯Êý£ºI2C_Delay()
+  50          ¹¦ÄÜ£ºÑÓÊ±£¬Ä£ÄâI2C×ÜÏß×¨ÓÃ
+  51          ËµÃ÷£ºÕâ¸öº¯ÊýÑÓÊ±Ê±¼äÎª((6+2+I2C_DELAY_VALUE*4+4)/Ö÷Æµ)uS
+  52          */
+  53          static void I2C_Delay(){
+  54   1              u8 I2C_Delay_t = (I2C_DELAY_VALUE);
+C51 COMPILER V9.52.0.0   I2C                                                               03/19/2018 18:17:07 PAGE 2   
+
+  55   1              while(--I2C_Delay_t != 0);
+  56   1      }
+  57          
+  58          /*
+  59          º¯Êý£ºI2C_Init()
+  60          ¹¦ÄÜ£ºI2C×ÜÏß³õÊ¼»¯£¬Ê¹×ÜÏß´¦ÓÚ¿ÕÏÐ×´Ì¬
+  61          ËµÃ÷£ºÔÚmain()º¯ÊýµÄ¿ªÊ¼´¦£¬Í¨³£Ó¦µ±ÒªÖ´ÐÐÒ»´Î±¾º¯Êý
+  62          */
+  63          void I2C_Init(){
+  64   1              // ½«I2C_SCLºÍI2C_SDAÉèÖÃ³É¿ªÂ©
+  65   1              GPIO_SelMode(0, 5, 2);
+  66   1              GPIO_SelMode(0, 5, 3);
+  67   1              
+  68   1              I2C_SCL = 1;
+  69   1              I2C_Delay();
+  70   1              I2C_SDA = 1;
+  71   1              I2C_Delay();
+  72   1      }
+  73          
+  74          /*
+  75          º¯Êý£ºI2C_Start()
+  76          ¹¦ÄÜ£º²úÉúI2C×ÜÏßµÄÆðÊ¼×´Ì¬
+  77          ËµÃ÷£º
+  78                  SCL´¦ÓÚ¸ßµçÆ½ÆÚ¼ä£¬µ±SDA³öÏÖÏÂ½µÑØÊ±Æô¶¯I2C×ÜÏß
+  79                  ²»ÂÛSDAºÍSCL´¦ÓÚÊ²Ã´µçÆ½×´Ì¬£¬±¾º¯Êý×ÜÄÜÕýÈ·²úÉúÆðÊ¼×´Ì¬
+  80                  ±¾º¯ÊýÒ²¿ÉÒÔÓÃÀ´²úÉúÖØ¸´ÆðÊ¼×´Ì¬
+  81                  ±¾º¯ÊýÖ´ÐÐºó£¬I2C×ÜÏß´¦ÓÚÃ¦×´Ì¬
+  82          */
+  83          void I2C_Start(){
+  84   1              I2C_SDA = 1;
+  85   1              I2C_Delay();
+  86   1              I2C_SCL = 1;
+  87   1              I2C_Delay();
+  88   1              I2C_SDA = 0;
+  89   1              I2C_Delay();
+  90   1              I2C_SCL = 0;
+  91   1              I2C_Delay();
+  92   1      }
+  93          
+  94          /*
+  95          º¯Êý£ºI2C_Write()
+  96          ¹¦ÄÜ£ºÏòI2C×ÜÏßÐ´1¸ö×Ö½ÚµÄÊý¾Ý
+  97          ²ÎÊý£º
+  98                  dat£ºÒªÐ´µ½×ÜÏßÉÏµÄÊý¾Ý
+  99          */ 
+ 100          void I2C_Write(u8 dat){
+ 101   1              u8 t = 8;
+ 102   1              do{
+ 103   2                      I2C_SDA = (bit)(dat & 0x80);
+ 104   2                      I2C_Delay();
+ 105   2                      I2C_SCL = 1;
+ 106   2                      I2C_Delay();
+ 107   2                      I2C_SCL = 0;
+ 108   2                      I2C_Delay();
+ 109   2                      dat <<= 1;
+ 110   2              }while(--t != 0);
+ 111   1      }
+ 112          
+ 113          /*
+ 114          º¯Êý£ºI2C_Read()
+ 115          ¹¦ÄÜ£º´Ó´Ó»ú¶ÁÈ¡1¸ö×Ö½ÚµÄÊý¾Ý
+ 116          ·µ»Ø£º¶ÁÈ¡µÄÒ»¸ö×Ö½ÚÊý¾Ý
+C51 COMPILER V9.52.0.0   I2C                                                               03/19/2018 18:17:07 PAGE 3   
+
+ 117          */
+ 118          u8 I2C_Read(){
+ 119   1              u8 dat;
+ 120   1              u8 t = 8;
+ 121   1              I2C_SDA = 1;    // ÔÚ¶ÁÈ¡Êý¾ÝÖ®Ç°£¬Òª°ÑSDAÀ­¸ß
+ 122   1              I2C_Delay();
+ 123   1              do{
+ 124   2                      I2C_SCL = 1;            // Ö÷»úÊÍ·ÅSCLÏß£¬µÈ´ý´Ó»ú
+ 125   2                      I2C_Delay();
+ 126   2                      while(!I2C_SCL);        // µÈ´ý´Ó»úÊÍ·ÅSCL¡£´Ó»úÊÍ·ÅSCL´ú±í´Ó»úÒÑ¾­½«Êý¾ÝÔÚSDAÏßÉÏ×¼±¸ºÃ£¬¿ÉÒÔÁ¢¿Ì¶ÁÈ¡
+ 127   2                      dat <<= 1;
+ 128   2                      dat |= I2C_SDA;
+ 129   2                      I2C_SCL = 0;
+ 130   2                      I2C_Delay();
+ 131   2              }while(--t != 0);
+ 132   1              return dat;
+ 133   1      }
+ 134          
+ 135          /*
+ 136          º¯Êý£ºI2C_GetAck()
+ 137          ¹¦ÄÜ£º¶ÁÈ¡´Ó»úÓ¦´ðÎ»
+ 138          ·µ»Ø£º
+ 139                  0£º´Ó»úÓ¦´ð
+ 140                  1£º´Ó»ú·ÇÓ¦´ð
+ 141          ËµÃ÷£º
+ 142                  ´Ó»úÔÚÊÕµ½×ÜÏßÉÏµÄµØÖ·ºó£¬Èç¹ûºÍ×Ô¼ºµÄµØÖ·ÏàÍ¬£¬Ôò²úÉúÓ¦´ðÎ»
+ 143                  ´Ó»úÔÚÊÕµ½Ã¿¸ö×Ö½ÚµÄÊý¾Ýºó£¬Òª²úÉúÓ¦´ðÎ»
+ 144                  ´Ó»úÔÚÊÕµ½×îºó1¸ö×Ö½ÚµÄÊý¾Ýºó£¬Ò»°ãÒª²úÉú·ÇÓ¦´ðÎ»
+ 145          */
+ 146          bit I2C_GetAck(){
+ 147   1              u16 timeout = I2C_WAIT_ACK_TIMEOUT;
+ 148   1              I2C_SDA = 1;
+ 149   1              I2C_Delay();
+ 150   1              I2C_SCL = 1;
+ 151   1              I2C_Delay();
+ 152   1              while(I2C_SDA){
+ 153   2                      timeout--;
+ 154   2                      if(timeout==0){
+ 155   3                              //printf("Not Acknowledged.\r\n");
+ 156   3                              return 1;
+ 157   3                      }
+ 158   2              }
+ 159   1              I2C_SCL = 0;
+ 160   1              I2C_Delay();
+ 161   1              return 0;
+ 162   1      }
+ 163          
+ 164          /*
+ 165          º¯Êý£ºI2C_PutAck()
+ 166          ¹¦ÄÜ£ºÖ÷»ú²úÉúÓ¦´ðÎ»»ò·ÇÓ¦´ðÎ»
+ 167          ²ÎÊý£º
+ 168                  ack=0£ºÖ÷»ú²úÉúÓ¦´ðÎ»
+ 169                  ack=1£ºÖ÷»ú²úÉú·ÇÓ¦´ðÎ»
+ 170          ËµÃ÷£º
+ 171                  Ö÷»úÔÚ½ÓÊÕÍêÃ¿Ò»¸ö×Ö½ÚµÄÊý¾Ýºó£¬¶¼Ó¦µ±²úÉúÓ¦´ðÎ»
+ 172                  Ö÷»úÔÚ½ÓÊÕÍê×îºóÒ»¸ö×Ö½ÚµÄÊý¾Ýºó£¬Ó¦µ±²úÉú·ÇÓ¦´ðÎ»
+ 173          */
+ 174          void I2C_PutAck(bit ack){
+ 175   1              I2C_SDA = ack;
+ 176   1              I2C_Delay();
+ 177   1              I2C_SCL = 1;
+ 178   1              I2C_Delay();
+C51 COMPILER V9.52.0.0   I2C                                                               03/19/2018 18:17:07 PAGE 4   
+
+ 179   1              I2C_SCL = 0;
+ 180   1              I2C_Delay();
+ 181   1      }
+ 182          
+ 183          /*
+ 184          º¯Êý£ºI2C_Stop()
+ 185          ¹¦ÄÜ£º²úÉúI2C×ÜÏßµÄÍ£Ö¹×´Ì¬
+ 186          ËµÃ÷£º
+ 187                  SCL´¦ÓÚ¸ßµçÆ½ÆÚ¼ä£¬µ±SDA³öÏÖÉÏÉýÑØÊ±Í£Ö¹I2C×ÜÏß
+ 188                  ²»ÂÛSDAºÍSCL´¦ÓÚÊ²Ã´µçÆ½×´Ì¬£¬±¾º¯Êý×ÜÄÜÕýÈ·²úÉúÍ£Ö¹×´Ì¬
+ 189                  ±¾º¯ÊýÖ´ÐÐºó£¬I2C×ÜÏß´¦ÓÚ¿ÕÏÐ×´Ì¬
+ 190          */
+ 191          void I2C_Stop(){
+ 192   1              u16 t = I2C_STOP_WAIT_VALUE;
+ 193   1              I2C_SDA = 0;
+ 194   1              I2C_Delay();
+ 195   1              I2C_SCL = 1;
+ 196   1              I2C_Delay();
+ 197   1              I2C_SDA = 1;
+ 198   1              I2C_Delay();
+ 199   1              while(--t != 0);        // ÔÚÏÂÒ»´Î²úÉúStartÖ®Ç°£¬Òª¼ÓÒ»¶¨µÄÑÓÊ±
+ 200   1      }
+ 201          
+ 202          /*
+ 203          º¯Êý£ºCheckI2CSlaveValidity()
+ 204          ¹¦ÄÜ£º¼ì²é×ÜÏßÉÏËùÓÐµÄI2CÆ÷¼þ£¬Êä³öºÏ·¨µÄÆ÷¼þµØÖ·
+ 205          ËµÃ÷£º
+ 206                  Ö÷»úÆóÍ¼ÏòÆ÷¼þÐ´µØÖ·£¬Èç¹ûÆ÷¼þ²úÉúÓ¦´ð£¬ÔòËµÃ÷¸ÃÆ÷¼þºÏ·¨
+ 207          */
+ 208          void CheckI2CSlaveValidity(){
+ 209   1              u8 i = 0;
+ 210   1              printf("Start checking slaves!\r\n");
+ 211   1              I2C_Init();
+ 212   1              while(1){
+ 213   2                      bit result;
+ 214   2                      I2C_Start();
+ 215   2                      I2C_Write(i);
+ 216   2                      result = I2C_GetAck();
+ 217   2                      if(result == 0){
+ 218   3                              printf("Slave %d is valid.\r\n", (int)i);
+ 219   3                      }
+ 220   2                      I2C_Stop();
+ 221   2                      i++;
+ 222   2                      if(i == 0)break;
+ 223   2              }
+ 224   1              printf("Finished checking slaves!\r\n");
+ 225   1      }
+ 226          
+ 227          /*
+ 228          º¯Êý£ºI2C_Puts()
+ 229          ¹¦ÄÜ£ºI2C×ÜÏß×ÛºÏ·¢ËÍº¯Êý£¬Ïò´Ó»ú·¢ËÍ¶à¸ö×Ö½ÚµÄÊý¾Ý
+ 230          ²ÎÊý£º
+ 231                  SlaveAddr£º´Ó»úµØÖ·£¨7Î»´¿µØÖ·£¬²»º¬¶ÁÐ´Î»£©
+ 232                  SubAddr£º´Ó»úµÄ×ÓµØÖ·
+ 233                  SubMod£º×ÓµØÖ·Ä£Ê½£¬0£­ÎÞ×ÓµØÖ·£¬1£­µ¥×Ö½Ú×ÓµØÖ·£¬2£­Ë«×Ö½Ú×ÓµØÖ·
+ 234                  *dat£ºÒª·¢ËÍµÄÊý¾Ý
+ 235                  Size£ºÊý¾ÝµÄ×Ö½ÚÊý
+ 236          ·µ»Ø£º
+ 237                  0£º·¢ËÍ³É¹¦
+ 238                  1£ºÔÚ·¢ËÍµØÖ·¹ý³ÌÖÐ³öÏÖÒì³£
+ 239                  -1£ºÔÚ·¢ËÍÊý¾Ý¹ý³ÌÖÐ³öÏÖÒì³£
+ 240          ËµÃ÷£º
+C51 COMPILER V9.52.0.0   I2C                                                               03/19/2018 18:17:07 PAGE 5   
+
+ 241                  ±¾º¯ÊýÄÜ¹»ºÜºÃµØÊÊÓ¦ËùÓÐ³£¼ûµÄI2CÆ÷¼þ£¬²»ÂÛÆäÊÇ·ñÓÐ×ÓµØÖ·
+ 242                  µ±´Ó»úÃ»ÓÐ×ÓµØÖ·Ê±£¬²ÎÊýSubAddrÈÎÒâ£¬¶øSubModÓ¦µ±Îª0
+ 243          */
+ 244          s8 I2C_Puts(u8 SlaveAddr, u16 SubAddr, u8 SubMod, u8* dat, u16 Size){
+ 245   1              // ¶¨ÒåÁÙÊ±±äÁ¿
+ 246   1              u8 i;
+ 247   1              u8 a[3];
+ 248   1              // ¼ì²é³¤¶È
+ 249   1              if(Size == 0)return 0;
+ 250   1              // ×¼±¸´Ó»úµØÖ·
+ 251   1              a[0] = (SlaveAddr << 1);
+ 252   1              // ¼ì²é×ÓµØÖ·Ä£Ê½
+ 253   1              if(SubMod > 2)SubMod = 2;
+ 254   1              // È·¶¨×ÓµØÖ·
+ 255   1              switch(SubMod){
+ 256   2              case 0:
+ 257   2                      break;
+ 258   2              case 1:
+ 259   2                      a[1] = (u8)(SubAddr & 0xFF);
+ 260   2                      break;
+ 261   2              case 2:
+ 262   2                      a[1] = (u8)((SubAddr >> 8) & 0xFF);
+ 263   2                      a[2] = (u8)(SubAddr & 0xFF);
+ 264   2                      break;
+ 265   2              default:
+ 266   2                      break;
+ 267   2              }
+ 268   1              // ·¢ËÍ´Ó»úµØÖ·£¬½Ó×Å·¢ËÍ×ÓµØÖ·£¨Èç¹ûÓÐ×ÓµØÖ·µÄ»°£©
+ 269   1              SubMod++;
+ 270   1              I2C_Start();
+ 271   1              for(i=0;i<SubMod;++i){
+ 272   2                      I2C_Write(a[i]);
+ 273   2                      if(I2C_GetAck()){
+ 274   3                              I2C_Stop();
+ 275   3                              return 1;
+ 276   3                      }
+ 277   2              }
+ 278   1              // ·¢ËÍÊý¾Ý
+ 279   1              do{
+ 280   2                      I2C_Write(*dat++);
+ 281   2                      if(I2C_GetAck())break;
+ 282   2              }while(--Size != 0);
+ 283   1              // ·¢ËÍÍê±Ï£¬Í£Ö¹I2C×ÜÏß£¬²¢·µ»Ø½á¹û
+ 284   1              I2C_Stop();
+ 285   1              if(Size == 0){ 
+ 286   2                      return 0;
+ 287   2              }else{
+ 288   2                      return -1;
+ 289   2              }
+ 290   1      }
+ 291          
+ 292          /*
+ 293          º¯Êý£ºI2C_Gets()
+ 294          ¹¦ÄÜ£ºI2C×ÜÏß×ÛºÏ½ÓÊÕº¯Êý£¬´Ó´Ó»ú½ÓÊÕ¶à¸ö×Ö½ÚµÄÊý¾Ý
+ 295          ²ÎÊý£º
+ 296                  SlaveAddr£º´Ó»úµØÖ·£¨7Î»´¿µØÖ·£¬²»º¬¶ÁÐ´Î»£©
+ 297                  SubAddr£º´Ó»úµÄ×ÓµØÖ·
+ 298                  SubMod£º×ÓµØÖ·Ä£Ê½£¬0£­ÎÞ×ÓµØÖ·£¬1£­µ¥×Ö½Ú×ÓµØÖ·£¬2£­Ë«×Ö½Ú×ÓµØÖ·
+ 299                  *dat£º±£´æ½ÓÊÕµ½µÄÊý¾Ý
+ 300                  Size£ºÊý¾ÝµÄ×Ö½ÚÊý
+ 301          ·µ»Ø£º
+ 302                  0£º½ÓÊÕ³É¹¦
+C51 COMPILER V9.52.0.0   I2C                                                               03/19/2018 18:17:07 PAGE 6   
+
+ 303                  1£ºÔÚ½ÓÊÕ¹ý³ÌµÄ·¢ËÍµØÖ·Ê±³öÏÖÒì³£
+ 304          ËµÃ÷£º
+ 305                  ±¾º¯ÊýÄÜ¹»ºÜºÃµØÊÊÓ¦ËùÓÐ³£¼ûµÄI2CÆ÷¼þ£¬²»ÂÛÆäÊÇ·ñÓÐ×ÓµØÖ·
+ 306                  µ±´Ó»úÃ»ÓÐ×ÓµØÖ·Ê±£¬²ÎÊýSubAddrÈÎÒâ£¬¶øSubModÓ¦µ±Îª0
+ 307          */
+ 308          s8 I2C_Gets(u8 SlaveAddr, u16 SubAddr, u8 SubMod, u8* dat, u16 Size){
+ 309   1              // ¶¨ÒåÁÙÊ±±äÁ¿
+ 310   1              u8 i;
+ 311   1              u8 a[3];
+ 312   1              // ¼ì²é³¤¶È
+ 313   1              if(Size == 0)return 0;
+ 314   1              // ×¼±¸´Ó»úµØÖ·
+ 315   1              a[0] = (SlaveAddr << 1);
+ 316   1              // ¼ì²é×ÓµØÖ·Ä£Ê½
+ 317   1              if(SubMod > 2)SubMod = 2;
+ 318   1              // Èç¹ûÊÇÓÐ×ÓµØÖ·µÄ´Ó»ú£¬ÔòÒªÏÈ·¢ËÍ´Ó»úµØÖ·ºÍ×ÓµØÖ·
+ 319   1              if(SubMod != 0){
+ 320   2                      //È·¶¨×ÓµØÖ·
+ 321   2                      if(SubMod == 1){
+ 322   3                              a[1] = (u8)(SubAddr & 0xFF);
+ 323   3                      }else{
+ 324   3                              a[1] = (u8)((SubAddr >> 8) & 0xFF);
+ 325   3                              a[2] = (u8)(SubAddr & 0xFF);
+ 326   3                      }
+ 327   2                      // ·¢ËÍ´Ó»úµØÖ·£¬½Ó×Å·¢ËÍ×ÓµØÖ·
+ 328   2                      SubMod++;
+ 329   2                      I2C_Start();
+ 330   2                      for(i=0;i<SubMod;++i){
+ 331   3                              I2C_Write(a[i]);
+ 332   3                              if(I2C_GetAck()){
+ 333   4                                      I2C_Stop();
+ 334   4                                      return 1;
+ 335   4                              }
+ 336   3                      }
+ 337   2              }
+ 338   1              // ÕâÀïµÄI2C_Start()¶ÔÓÚÓÐ×ÓµØÖ·µÄ´Ó»úÊÇÖØ¸´ÆðÊ¼×´Ì¬
+ 339   1              // ¶ÔÓÚÎÞ×ÓµØÖ·µÄ´Ó»úÔòÊÇÕý³£µÄÆðÊ¼×´Ì¬
+ 340   1              I2C_Start();
+ 341   1              // ·¢ËÍ´Ó»úµØÖ·
+ 342   1              I2C_Write(a[0] + 1);
+ 343   1              if(I2C_GetAck()){
+ 344   2                      I2C_Stop();
+ 345   2                      return 1;
+ 346   2              }
+ 347   1              // ½ÓÊÕÊý¾Ý
+ 348   1              for(;;){
+ 349   2                      *dat++ = I2C_Read();
+ 350   2                      if(--Size == 0){
+ 351   3                              I2C_PutAck(1);
+ 352   3                              break;
+ 353   3                      }
+ 354   2                      I2C_PutAck(0);
+ 355   2              }
+ 356   1              // ½ÓÊÕÍê±Ï£¬Í£Ö¹I2C×ÜÏß£¬²¢·µ»Ø½á¹û
+ 357   1              I2C_Stop();
+ 358   1              return 0;
+ 359   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    541    ----
+   CONSTANT SIZE    =     74    ----
+C51 COMPILER V9.52.0.0   I2C                                                               03/19/2018 18:17:07 PAGE 7   
+
+   XDATA SIZE       =   ----      25
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       2
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
