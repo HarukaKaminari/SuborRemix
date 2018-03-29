@@ -1,4 +1,4 @@
-C51 COMPILER V9.52.0.0   I2C                                                               03/19/2018 18:17:07 PAGE 1   
+C51 COMPILER V9.52.0.0   I2C                                                               03/27/2018 10:00:46 PAGE 1   
 
 
 C51 COMPILER V9.52.0.0, COMPILATION OF MODULE I2C
@@ -60,9 +60,9 @@ line level    source
   50          功能：延时，模拟I2C总线专用
   51          说明：这个函数延时时间为((6+2+I2C_DELAY_VALUE*4+4)/主频)uS
   52          */
-  53          static void I2C_Delay(){
+  53          static void I2C_Delay() small{
   54   1              u8 I2C_Delay_t = (I2C_DELAY_VALUE);
-C51 COMPILER V9.52.0.0   I2C                                                               03/19/2018 18:17:07 PAGE 2   
+C51 COMPILER V9.52.0.0   I2C                                                               03/27/2018 10:00:46 PAGE 2   
 
   55   1              while(--I2C_Delay_t != 0);
   56   1      }
@@ -72,7 +72,7 @@ line level    source
   60          功能：I2C总线初始化，使总线处于空闲状态
   61          说明：在main()函数的开始处，通常应当要执行一次本函数
   62          */
-  63          void I2C_Init(){
+  63          void I2C_Init() small{
   64   1              // 将I2C_SCL和I2C_SDA设置成开漏
   65   1              GPIO_SelMode(0, 5, 2);
   66   1              GPIO_SelMode(0, 5, 3);
@@ -92,7 +92,7 @@ line level    source
   80                  本函数也可以用来产生重复起始状态
   81                  本函数执行后，I2C总线处于忙状态
   82          */
-  83          void I2C_Start(){
+  83          void I2C_Start() small{
   84   1              I2C_SDA = 1;
   85   1              I2C_Delay();
   86   1              I2C_SCL = 1;
@@ -109,7 +109,7 @@ line level    source
   97          参数：
   98                  dat：要写到总线上的数据
   99          */ 
- 100          void I2C_Write(u8 dat){
+ 100          void I2C_Write(u8 dat) small{
  101   1              u8 t = 8;
  102   1              do{
  103   2                      I2C_SDA = (bit)(dat & 0x80);
@@ -126,10 +126,10 @@ line level    source
  114          函数：I2C_Read()
  115          功能：从从机读取1个字节的数据
  116          返回：读取的一个字节数据
-C51 COMPILER V9.52.0.0   I2C                                                               03/19/2018 18:17:07 PAGE 3   
+C51 COMPILER V9.52.0.0   I2C                                                               03/27/2018 10:00:46 PAGE 3   
 
  117          */
- 118          u8 I2C_Read(){
+ 118          u8 I2C_Read() small{
  119   1              u8 dat;
  120   1              u8 t = 8;
  121   1              I2C_SDA = 1;    // 在读取数据之前，要把SDA拉高
@@ -157,7 +157,7 @@ line level    source
  143                  从机在收到每个字节的数据后，要产生应答位
  144                  从机在收到最后1个字节的数据后，一般要产生非应答位
  145          */
- 146          bit I2C_GetAck(){
+ 146          bit I2C_GetAck() small{
  147   1              u16 timeout = I2C_WAIT_ACK_TIMEOUT;
  148   1              I2C_SDA = 1;
  149   1              I2C_Delay();
@@ -185,12 +185,12 @@ line level    source
  171                  主机在接收完每一个字节的数据后，都应当产生应答位
  172                  主机在接收完最后一个字节的数据后，应当产生非应答位
  173          */
- 174          void I2C_PutAck(bit ack){
+ 174          void I2C_PutAck(bit ack) small{
  175   1              I2C_SDA = ack;
  176   1              I2C_Delay();
  177   1              I2C_SCL = 1;
  178   1              I2C_Delay();
-C51 COMPILER V9.52.0.0   I2C                                                               03/19/2018 18:17:07 PAGE 4   
+C51 COMPILER V9.52.0.0   I2C                                                               03/27/2018 10:00:46 PAGE 4   
 
  179   1              I2C_SCL = 0;
  180   1              I2C_Delay();
@@ -204,7 +204,7 @@ line level    source
  188                  不论SDA和SCL处于什么电平状态，本函数总能正确产生停止状态
  189                  本函数执行后，I2C总线处于空闲状态
  190          */
- 191          void I2C_Stop(){
+ 191          void I2C_Stop() small{
  192   1              u16 t = I2C_STOP_WAIT_VALUE;
  193   1              I2C_SDA = 0;
  194   1              I2C_Delay();
@@ -221,7 +221,7 @@ line level    source
  205          说明：
  206                  主机企图向器件写地址，如果器件产生应答，则说明该器件合法
  207          */
- 208          void CheckI2CSlaveValidity(){
+ 208          void CheckI2CSlaveValidity() small{
  209   1              u8 i = 0;
  210   1              printf("Start checking slaves!\r\n");
  211   1              I2C_Init();
@@ -254,12 +254,12 @@ line level    source
  238                  1：在发送地址过程中出现异常
  239                  -1：在发送数据过程中出现异常
  240          说明：
-C51 COMPILER V9.52.0.0   I2C                                                               03/19/2018 18:17:07 PAGE 5   
+C51 COMPILER V9.52.0.0   I2C                                                               03/27/2018 10:00:46 PAGE 5   
 
  241                  本函数能够很好地适应所有常见的I2C器件，不论其是否有子地址
  242                  当从机没有子地址时，参数SubAddr任意，而SubMod应当为0
  243          */
- 244          s8 I2C_Puts(u8 SlaveAddr, u16 SubAddr, u8 SubMod, u8* dat, u16 Size){
+ 244          s8 I2C_Puts(u8 SlaveAddr, u16 SubAddr, u8 SubMod, u8* dat, u16 Size) small{
  245   1              // 定义临时变量
  246   1              u8 i;
  247   1              u8 a[3];
@@ -318,14 +318,14 @@ line level    source
  300                  Size：数据的字节数
  301          返回：
  302                  0：接收成功
-C51 COMPILER V9.52.0.0   I2C                                                               03/19/2018 18:17:07 PAGE 6   
+C51 COMPILER V9.52.0.0   I2C                                                               03/27/2018 10:00:46 PAGE 6   
 
  303                  1：在接收过程的发送地址时出现异常
  304          说明：
  305                  本函数能够很好地适应所有常见的I2C器件，不论其是否有子地址
  306                  当从机没有子地址时，参数SubAddr任意，而SubMod应当为0
  307          */
- 308          s8 I2C_Gets(u8 SlaveAddr, u16 SubAddr, u8 SubMod, u8* dat, u16 Size){
+ 308          s8 I2C_Gets(u8 SlaveAddr, u16 SubAddr, u8 SubMod, u8* dat, u16 Size) small{
  309   1              // 定义临时变量
  310   1              u8 i;
  311   1              u8 a[3];
@@ -380,13 +380,13 @@ line level    source
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    541    ----
+   CODE SIZE        =    497    ----
    CONSTANT SIZE    =     74    ----
-C51 COMPILER V9.52.0.0   I2C                                                               03/19/2018 18:17:07 PAGE 7   
+C51 COMPILER V9.52.0.0   I2C                                                               03/27/2018 10:00:46 PAGE 7   
 
-   XDATA SIZE       =   ----      25
+   XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =   ----    ----
+   DATA SIZE        =   ----      25
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----       2
 END OF MODULE INFORMATION.

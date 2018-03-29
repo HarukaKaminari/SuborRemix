@@ -27,9 +27,12 @@ void STDIO_Init() small{
     REN = 1;                                                                   //串口0接收使能
 }
 
-void STDIO_SetUART0ToP0() small{
+void STDIO_SetUART0Pin(bit isSetToP0) small{
 	PORT_CFG |= bP0_OC;
     P0_DIR |= bTXD_;
     P0_PU |= bTXD_ | bRXD_;
-    PIN_FUNC |= bUART0_PIN_X;	// 串口映射到P0.2和P0.3
+	if(isSetToP0)
+		PIN_FUNC |= bUART0_PIN_X;	// 串口映射到P0.2和P0.3
+	else
+		PIN_FUNC &= ~bUART0_PIN_X;	// 串口映射到P3.0和P3.1
 }

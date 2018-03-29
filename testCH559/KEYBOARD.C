@@ -27,6 +27,8 @@ void KEYBOARD_Refresh(u8* buf) small{
 			keyCodeState[bank] |= (1 << offs);
 		}
 	}
+	// 小霸王键盘在扫描的时候，在表现效果上需要有一个“始终按下”的键。目前把这个键安排在最后一位0xFF。也就是说，键码为0xFF的键，是处于始终按下的状态
+	keyCodeState[KEY_CODE_BUF_SIZE - 2] |= (1 << 7);
 }
 
 // 某键是否按下（上一帧未按，当前帧按下）

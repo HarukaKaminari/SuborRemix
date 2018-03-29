@@ -146,15 +146,16 @@ void	CfgFsys( )
 
 
 void main() small{
+	// 首先把所有GPIO都设置为高阻，防止输入输出误伤主板或者被主板误伤
+	EXPINTERFACE_Init(0);
 	SYSTEM_SetFreq();
 	SYSTEM_Delayms(20);
 	STDIO_Init();
-	STDIO_SetUART0ToP0();
+	STDIO_SetUART0Pin(1);
 	printf("UART initialized.\n");
+	printf("ExpInterface initialized.\n");
 	KM_LibInit();
 	printf("KMLib initialized.\n");
-	EXPINTERFACE_Init(0);
-	printf("ExpInterface initialized.\n");
 	while(1){
 		u8 s;
 		u8 srcBuf[10];
@@ -197,6 +198,12 @@ void main() small{
 					case 2:{
 						EXPINTERFACE_InitMode2();
 					}break;
+					case 3:{
+						EXPINTERFACE_InitMode3();
+					}break;
+					case 4:{
+						EXPINTERFACE_InitMode4();
+					}break;
 				}
 				isChangedMode = 0;
 			}
@@ -210,6 +217,12 @@ void main() small{
 					}break;
 					case 2:{
 						EXPINTERFACE_UpdateMode2();
+					}break;
+					case 3:{
+						EXPINTERFACE_UpdateMode3();
+					}break;
+					case 4:{
+						EXPINTERFACE_UpdateMode4();
 					}break;
 				}
 			}

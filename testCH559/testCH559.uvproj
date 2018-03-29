@@ -371,6 +371,11 @@
               <FileType>1</FileType>
               <FilePath>.\testMain.c</FilePath>
             </File>
+            <File>
+              <FileName>KeyCode.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\KeyCode.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -1,6 +1,7 @@
 #include "EXPINTERFACE.h"
 #include "GPIO.h"
 #include "KEYBOARD.h"
+#include "KeyCode.h"
 
 
 // 根据NO$NES文档的说明，老版FC的手柄是不可取下的，所以第三方手柄只能插到扩展口。
@@ -49,12 +50,13 @@ static u8 data keyValue_1P;
 static u8 data keyValue_2P;
 static u8 data keyValue_3P;
 static u8 data keyValue_4P;
-static u8 data keyValue_Keyboard;
 
-static u8 data Register_1P = 0;	// 1P手柄寄存器
-static u8 data Register_2P = 0;	// 2P手柄寄存器
-static u8 data Register_3P = 0;	// 3P手柄寄存器
-static u8 data Register_4P = 0;	// 4P手柄寄存器
+static u8 data Register_1P = 0;			// 1P手柄寄存器
+static u8 data Register_2P = 0;			// 2P手柄寄存器
+static u8 data Register_3P = 0;			// 3P手柄寄存器
+static u8 data Register_4P = 0;			// 4P手柄寄存器
+static u8 data Register_Keyboard = 0;	// 键盘寄存器
+static u8 data row = 0;					// 键盘正在扫描第几行
 
 bit OUT0_curr = 0;
 bit OUT1_curr = 0;
@@ -68,6 +70,7 @@ bit J1CLK_prev = 0;
 bit J2CLK_prev = 0;
 
 bit isReady = 0;	// 是否检测到了锁存信号
+bit isLower = 0;	// 是否采样键盘寄存器值的低4位
 
 
 static void EXPINTERFACE_RefreshOUT0() small{
@@ -81,6 +84,19 @@ static bit EXPINTERFACE_IsFallingEdgeOfOUT0() small{
 }
 static void EXPINTERFACE_UpdateOUT0() small{
 	OUT0_prev = OUT0_curr;
+}
+
+static void EXPINTERFACE_RefreshOUT1() small{
+	OUT1_curr = OUT1;
+}
+static bit EXPINTERFACE_IsRisingEdgeOfOUT1() small{
+	return OUT1_curr == 1 && OUT1_prev == 0;
+}
+static bit EXPINTERFACE_IsFallingEdgeOfOUT1() small{
+	return OUT1_curr == 0 && OUT1_prev == 1;
+}
+static void EXPINTERFACE_UpdateOUT1() small{
+	OUT1_prev = OUT1_curr;
 }
 
 static void EXPINTERFACE_RefreshJ1CLK() small{
@@ -159,6 +175,43 @@ static void EXPINTERFACE_Set4PKeyStatus() small{
 		keyValue_4P |= keyCodeBuf[p[i]];
 		keyValue_4P <<= 1;
 	}
+}
+
+// 读键码缓冲区，设置小霸王键盘按键寄存器
+static void EXPINTERFACE_SetSuborKeyboardKeyStatus(u8 row) small{
+	u8 i = 0;
+	static const u8 code keyMap[] = {
+		KC_4,			KC_G,			KC_F,			KC_C,			KC_F2,	KC_E,		KC_5,			KC_V,
+		KC_2,			KC_D,			KC_S,			KC_End,			KC_F1,	KC_W,		KC_3,			KC_X,
+		KC_Insert,		KC_Backspace,	KC_PageDown,	KC_RightArrow,	KC_F8,	KC_PageUp,	KC_Delete,		KC_Home,
+		KC_9,			KC_I,			KC_L,			KC_Comma,		KC_F5,	KC_O,		KC_0,			KC_Period,
+		KC_RBracket,	KC_Enter,		KC_UpArrow,		KC_LeftArrow,	KC_F7,	KC_LBracket,KC_BackSlash,	KC_DownArrow,
+		KC_Q,			KC_CapsLock,	KC_Z,			KC_Tab,			KC_Esc,	KC_A,		KC_1,			KC_LControl,
+		KC_7,			KC_Y,			KC_K,			KC_M,			KC_F4,	KC_U,		KC_8,			KC_J,
+		KC_Minus,		KC_SemiColon,	KC_Quote,		KC_Slash,		KC_F6,	KC_P,		KC_Equal,		KC_LShift,
+		KC_T,			KC_H,			KC_N,			KC_Space,		KC_F3,	KC_R,		KC_6,			KC_B,
+		KC_Null,		KC_Null,		KC_Null,		KC_Null,		0xFF,	KC_Null,	KC_Null,		KC_Null,
+		KC_LWin,		KC_KP_4,		KC_KP_7,		KC_F11,			KC_F12,	KC_KP_1,	KC_KP_2,		KC_KP_8,
+		KC_KP_Subtract,	KC_KP_Add,		KC_KP_Multiply,	KC_KP_9,		KC_F10,	KC_KP_5,	KC_KP_Divide,	KC_KP_NumLock,
+		KC_Grave,		KC_KP_6,		KC_Pause,		KC_Space,		KC_F9,	KC_KP_3,	KC_KP_Dot,		KC_KP_0,
+	};
+	Register_Keyboard = 0;
+	for(i=0;i<13;++i){
+		if(KEYBOARD_IsKeyHold(keyMap[row * 8 + i])){
+			Register_Keyboard |= 1;
+		}
+		Register_Keyboard <<= 1;
+	}
+}
+
+// 读键码缓冲区，设置FamilyBasic键盘按键寄存器
+// 注意！FamilyBasic的键盘布局和按键，和常用的键盘有极大的不同。
+// 甚至有些键的上档键值，都和常用键盘不一样。比如常用键盘Shift+2=@，但FamilyBasic则是Shift+2="，@有专门的按键。
+// 这就导致像小霸王键盘那种映射方式，对用户来说很难做到直观和方便输入。
+// 因此这里采用另一种完全不同的映射方式：不采用键码，而采用键值。
+// 根据
+static void EXPINTERFACE_SetFamilyBasicKeyboardKeyStatus(u8 row) small{
+	
 }
 
 // 初始化所有GPIO。参数代表是否启用该设备
@@ -353,4 +406,108 @@ void EXPINTERFACE_UpdateMode2() small{
 	EXPINTERFACE_UpdateJ1CLK();
 	// 更新4P时钟信号状态
 	EXPINTERFACE_UpdateJ2CLK();
+}
+
+// 初始化Mode3。在这种模式下，USB键盘被视为小霸王键盘
+void EXPINTERFACE_InitMode3() small{
+	EXPINTERFACE_Init(1);
+	Register_Keyboard = 0;
+	OUT0_curr = 0;
+	OUT0_prev = 0;
+	OUT1_curr = 0;
+	OUT1_prev = 0;
+	OUT2_curr = 0;
+	OUT2_prev = 0;
+	
+	isLower = 1;
+	row = 0;
+}
+
+void EXPINTERFACE_UpdateMode3() small{
+	// 如果OUT2==0，则此时键盘处于disable状态
+	if(OUT2 == 0){
+		return;
+	}
+	// 读OUT1
+	EXPINTERFACE_RefreshOUT1();
+	// OUT1的状态反映了取键盘寄存器的高4位还是低4位
+	if(OUT1 == 0){
+		isLower = 1;
+	}else{
+		isLower = 0;
+	}
+	// 如果OUT0==1的话，键盘处于复位状态，当前row置为0
+	if(OUT0 == 1){
+		row = 0;
+		return;
+	}
+	// OUT1的下降沿代表row累加
+	if(EXPINTERFACE_IsFallingEdgeOfOUT1()){
+		row++;
+	}
+	// 获得当前行的键值
+	EXPINTERFACE_SetSuborKeyboardKeyStatus(row);
+	// 根据高低位状态，把键盘寄存器的高低位呈现到端口上
+	J2D1 = (Register_Keyboard >> (isLower ? 0 : 4)) & 1;
+	J2D2 = (Register_Keyboard >> (isLower ? 1 : 5)) & 1;
+	J2D3 = (Register_Keyboard >> (isLower ? 2 : 6)) & 1;
+	J2D4 = (Register_Keyboard >> (isLower ? 3 : 7)) & 1;
+	// 更新OUT1的状态
+	EXPINTERFACE_UpdateOUT1();
+}
+
+// 初始化Mode4。在这种模式下，USB键盘被视为Family Basic键盘
+void EXPINTERFACE_InitMode4() small{
+	EXPINTERFACE_Init(1);
+	Register_Keyboard = 0;
+	OUT0_curr = 0;
+	OUT0_prev = 0;
+	OUT1_curr = 0;
+	OUT1_prev = 0;
+	OUT2_curr = 0;
+	OUT2_prev = 0;
+	
+	isLower = 1;
+	row = 0;
+}
+
+void EXPINTERFACE_UpdateMode4() small{
+	// 如果OUT2==0，则此时键盘处于disable状态
+	if(OUT2 == 0){
+		return;
+	}
+	// 读OUT1
+	EXPINTERFACE_RefreshOUT1();
+	// OUT1的状态反映了取键盘寄存器的高4位还是低4位
+	if(OUT1 == 0){
+		isLower = 1;
+	}else{
+		isLower = 0;
+	}
+	// 如果OUT0==1的话，键盘处于复位状态，当前row置为0
+	if(OUT0 == 1){
+		row = 0;
+		return;
+	}
+	// OUT1的下降沿代表row累加
+	if(EXPINTERFACE_IsFallingEdgeOfOUT1()){
+		row++;
+		// 根据nesdev wiki和NO$NES的描述，FamilyBasic键盘只需要扫描9行就可以把所有按键全部扫描。
+		// 但是nesdev wiki也提到Lode Runner这个游戏存在检测键盘的逻辑，在这个逻辑中会扫描第10行（row=9）并获得数据。
+		// 同样，NO$NES也有提到扫描第10行（row=9）会返回垃圾数据，然后复位到第1行（row=0）。
+		// 这似乎在暗示着我不应该扫描到第10行（row=9）的时候就立刻复位，而是应该允许扫描完这一行并得到结果。
+		// 由于这个无法确定的原因，我在这里不进行复位操作，而是依赖OUT0的状态进行复位。
+		// 我认为这样应该不会发生逻辑错误……
+		//if(row >= 9)
+		//	row = 0;
+	}
+	// 获得当前行的键值
+	EXPINTERFACE_SetFamilyBasicKeyboardKeyStatus(row);
+	// 根据高低位状态，把键盘寄存器的高低位呈现到端口上
+	J2D1 = (Register_Keyboard >> (isLower ? 0 : 4)) & 1;
+	J2D2 = (Register_Keyboard >> (isLower ? 1 : 5)) & 1;
+	J2D3 = (Register_Keyboard >> (isLower ? 2 : 6)) & 1;
+	J2D4 = (Register_Keyboard >> (isLower ? 3 : 7)) & 1;
+	// 更新OUT1的状态
+	EXPINTERFACE_UpdateOUT1();
 }

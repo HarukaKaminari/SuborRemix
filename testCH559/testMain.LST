@@ -1,4 +1,4 @@
-C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/19/2018 18:17:06 PAGE 1   
+C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/27/2018 10:00:46 PAGE 1   
 
 
 C51 COMPILER V9.52.0.0, COMPILATION OF MODULE TESTMAIN
@@ -62,7 +62,7 @@ line level    source
   53   2                      ++ SAFE_MOD;
   54   2      #endif
   55   2      #if             FREQ_SYS >= 30000000
-C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/19/2018 18:17:06 PAGE 2   
+C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/27/2018 10:00:46 PAGE 2   
 
   56   2                      ++ SAFE_MOD;
   57   2      #endif
@@ -126,7 +126,7 @@ line level    source
  115   2          }
  116   1      }
  117          
-C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/19/2018 18:17:06 PAGE 3   
+C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/27/2018 10:00:46 PAGE 3   
 
  118          /*******************************************************************************
  119          * Function Name  : CfgFsys( )
@@ -160,102 +160,115 @@ line level    source
  146          
  147          
  148          void main() small{
- 149   1              SYSTEM_SetFreq();
- 150   1              SYSTEM_Delayms(20);
- 151   1              STDIO_Init();
- 152   1              STDIO_SetUART0ToP0();
- 153   1              printf("UART initialized.\n");
- 154   1              KM_LibInit();
- 155   1              printf("KMLib initialized.\n");
- 156   1              EXPINTERFACE_Init(0);
- 157   1              printf("ExpInterface initialized.\n");
- 158   1              while(1){
- 159   2                      u8 s;
- 160   2                      u8 srcBuf[10];
- 161   2                      u8 dstBuf[10];
- 162   2                      u8 srcLen;
- 163   2                      u8 dstLen;
- 164   2                      
- 165   2                      KM_ProcessSystem();
- 166   2                      s = KM_HostGetData(0, dstBuf, &dstLen, srcBuf, &srcLen);
- 167   2                      if(s == 0){
- 168   3                              // 获取数据成功 buf 存放数据，len数据长度
- 169   3                              for(s=0;s<dstLen;s++){
- 170   4                                      printf("%02X ", (UINT16)dstBuf[s]);
- 171   4                              }
- 172   3                              printf("\n");
- 173   3                              
- 174   3                              KEYBOARD_Refresh(dstBuf);
- 175   3                              // 组合键Ctrl+Alt+Shift+Esc，切换键盘工作模式
- 176   3                              if(
- 177   3                                      (KEYBOARD_IsKeyHold(0x100) | KEYBOARD_IsKeyHold(0x104)) &
- 178   3                                      (KEYBOARD_IsKeyHold(0x101) | KEYBOARD_IsKeyHold(0x105)) &
-C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/19/2018 18:17:06 PAGE 4   
+ 149   1              // 首先把所有GPIO都设置为高阻，防止输入输出误伤主板或者被主板误伤
+ 150   1              EXPINTERFACE_Init(0);
+ 151   1              printf("ExpInterface initialized.\n");
+ 152   1              SYSTEM_SetFreq();
+ 153   1              SYSTEM_Delayms(20);
+ 154   1              STDIO_Init();
+ 155   1              STDIO_SetUART0ToP0();
+ 156   1              printf("UART initialized.\n");
+ 157   1              KM_LibInit();
+ 158   1              printf("KMLib initialized.\n");
+ 159   1              while(1){
+ 160   2                      u8 s;
+ 161   2                      u8 srcBuf[10];
+ 162   2                      u8 dstBuf[10];
+ 163   2                      u8 srcLen;
+ 164   2                      u8 dstLen;
+ 165   2                      
+ 166   2                      KM_ProcessSystem();
+ 167   2                      s = KM_HostGetData(0, dstBuf, &dstLen, srcBuf, &srcLen);
+ 168   2                      if(s == 0){
+ 169   3                              // 获取数据成功 buf 存放数据，len数据长度
+ 170   3                              for(s=0;s<dstLen;s++){
+ 171   4                                      printf("%02X ", (UINT16)dstBuf[s]);
+ 172   4                              }
+ 173   3                              printf("\n");
+ 174   3                              
+ 175   3                              KEYBOARD_Refresh(dstBuf);
+ 176   3                              // 组合键Ctrl+Alt+Shift+Esc，切换键盘工作模式
+ 177   3                              if(
+ 178   3                                      (KEYBOARD_IsKeyHold(0x100) | KEYBOARD_IsKeyHold(0x104)) &
+C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/27/2018 10:00:46 PAGE 4   
 
- 179   3                                      (KEYBOARD_IsKeyHold(0x102) | KEYBOARD_IsKeyHold(0x106))){
- 180   4                                      if(KEYBOARD_IsKeyDown(0x29)){
- 181   5                                              mode++;
- 182   5                                              isChangedMode = 1;
- 183   5                                      }
- 184   4                                      if(KEYBOARD_IsKeyUp(0x29)){
- 185   5                                              
- 186   5                                      }
- 187   4                              }
- 188   3                              
- 189   3                              if(isChangedMode){
- 190   4                                      switch(mode){
- 191   5                                              case 0:{
- 192   6                                                      EXPINTERFACE_InitMode0();
- 193   6                                              }break;
- 194   5                                              case 1:{
- 195   6                                                      EXPINTERFACE_InitMode1();
- 196   6                                              }break;
- 197   5                                              case 2:{
- 198   6                                                      EXPINTERFACE_InitMode2();
- 199   6                                              }break;
- 200   5                                      }
- 201   4                                      isChangedMode = 0;
- 202   4                              }
- 203   3                              if(1){
- 204   4                                      switch(mode){
- 205   5                                              case 0:{
- 206   6                                                      EXPINTERFACE_UpdateMode0();
- 207   6                                              }break;
- 208   5                                              case 1:{
- 209   6                                                      EXPINTERFACE_UpdateMode1();
- 210   6                                              }break;
- 211   5                                              case 2:{
- 212   6                                                      EXPINTERFACE_UpdateMode2();
- 213   6                                              }break;
- 214   5                                      }
- 215   4                              }
- 216   3                      }
- 217   2                      
- 218   2                      if(t == 0){
- 219   3                              t = 0xFFFF;
- 220   3                              KM_TypeQuery(0, dstBuf, &dstLen);
- 221   3                              for(s=0;s<dstLen;s=s+2){        
- 222   4                                      if(dstBuf[s + 1] == DEV_KEYBOARD){                      
- 223   5                                              printf("ifc %02x keyboard\n", (UINT16)dstBuf[s]);
- 224   5                                      }        
- 225   4                                      if(dstBuf[s + 1] == DEV_MOUSE){                 
- 226   5                                              printf("ifc %02x mouse\n", (UINT16)dstBuf[s]);
+ 179   3                                      (KEYBOARD_IsKeyHold(0x101) | KEYBOARD_IsKeyHold(0x105)) &
+ 180   3                                      (KEYBOARD_IsKeyHold(0x102) | KEYBOARD_IsKeyHold(0x106))){
+ 181   4                                      if(KEYBOARD_IsKeyDown(0x29)){
+ 182   5                                              mode++;
+ 183   5                                              isChangedMode = 1;
+ 184   5                                      }
+ 185   4                                      if(KEYBOARD_IsKeyUp(0x29)){
+ 186   5                                              
+ 187   5                                      }
+ 188   4                              }
+ 189   3                              
+ 190   3                              if(isChangedMode){
+ 191   4                                      switch(mode){
+ 192   5                                              case 0:{
+ 193   6                                                      EXPINTERFACE_InitMode0();
+ 194   6                                              }break;
+ 195   5                                              case 1:{
+ 196   6                                                      EXPINTERFACE_InitMode1();
+ 197   6                                              }break;
+ 198   5                                              case 2:{
+ 199   6                                                      EXPINTERFACE_InitMode2();
+ 200   6                                              }break;
+ 201   5                                              case 3:{
+ 202   6                                                      EXPINTERFACE_InitMode3();
+ 203   6                                              }break;
+ 204   5                                              case 4:{
+ 205   6                                                      EXPINTERFACE_InitMode4();
+ 206   6                                              }break;
+ 207   5                                      }
+ 208   4                                      isChangedMode = 0;
+ 209   4                              }
+ 210   3                              if(1){
+ 211   4                                      switch(mode){
+ 212   5                                              case 0:{
+ 213   6                                                      EXPINTERFACE_UpdateMode0();
+ 214   6                                              }break;
+ 215   5                                              case 1:{
+ 216   6                                                      EXPINTERFACE_UpdateMode1();
+ 217   6                                              }break;
+ 218   5                                              case 2:{
+ 219   6                                                      EXPINTERFACE_UpdateMode2();
+ 220   6                                              }break;
+ 221   5                                              case 3:{
+ 222   6                                                      EXPINTERFACE_UpdateMode3();
+ 223   6                                              }break;
+ 224   5                                              case 4:{
+ 225   6                                                      EXPINTERFACE_UpdateMode4();
+ 226   6                                              }break;
  227   5                                      }
- 228   4                                      if(dstBuf[s + 1] == DEV_MOUSE_BIOS){                    
- 229   5                                              printf("ifc %02x mouse-bios\n", (UINT16)dstBuf[s]);
- 230   5                                      }
- 231   4                              }
- 232   3                      }
- 233   2                      t--;
- 234   2              }
- 235   1      }
+ 228   4                              }
+ 229   3                      }
+ 230   2                      
+ 231   2                      if(t == 0){
+ 232   3                              t = 0xFFFF;
+ 233   3                              KM_TypeQuery(0, dstBuf, &dstLen);
+ 234   3                              for(s=0;s<dstLen;s=s+2){        
+ 235   4                                      if(dstBuf[s + 1] == DEV_KEYBOARD){                      
+ 236   5                                              printf("ifc %02x keyboard\n", (UINT16)dstBuf[s]);
+ 237   5                                      }        
+ 238   4                                      if(dstBuf[s + 1] == DEV_MOUSE){                 
+ 239   5                                              printf("ifc %02x mouse\n", (UINT16)dstBuf[s]);
+ 240   5                                      }
+C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/27/2018 10:00:46 PAGE 5   
+
+ 241   4                                      if(dstBuf[s + 1] == DEV_MOUSE_BIOS){                    
+ 242   5                                              printf("ifc %02x mouse-bios\n", (UINT16)dstBuf[s]);
+ 243   5                                      }
+ 244   4                              }
+ 245   3                      }
+ 246   2                      t--;
+ 247   2              }
+ 248   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    501    ----
+   CODE SIZE        =    533    ----
    CONSTANT SIZE    =    130    ----
-C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/19/2018 18:17:06 PAGE 5   
-
    XDATA SIZE       =      2    ----
    PDATA SIZE       =   ----    ----
    DATA SIZE        =      1      23

@@ -1,4 +1,4 @@
-C51 COMPILER V9.52.0.0   GPIO                                                              03/19/2018 18:17:07 PAGE 1   
+C51 COMPILER V9.52.0.0   GPIO                                                              03/27/2018 10:00:46 PAGE 1   
 
 
 C51 COMPILER V9.52.0.0, COMPILATION OF MODULE GPIO
@@ -62,7 +62,7 @@ line level    source
   52   2                              Pn_PU &= ~(1 << PinNum);
   53   2                      break;
   54   2                      case 1:                                                         // 仅输入，带上拉
-C51 COMPILER V9.52.0.0   GPIO                                                              03/19/2018 18:17:07 PAGE 2   
+C51 COMPILER V9.52.0.0   GPIO                                                              03/27/2018 10:00:46 PAGE 2   
 
   55   2                              PORT_CFG &= ~(bP0_OC << Port);
   56   2                              Pn_DIR &= ~(1 << PinNum);
@@ -126,7 +126,7 @@ line level    source
  114   1              // 内部上拉
  115   1              if(isPullup)
  116   1                      P4_PU |= 1 << PinNum;
-C51 COMPILER V9.52.0.0   GPIO                                                              03/19/2018 18:17:07 PAGE 3   
+C51 COMPILER V9.52.0.0   GPIO                                                              03/27/2018 10:00:46 PAGE 3   
 
  117   1              else
  118   1                      P4_PU &= ~(1 << PinNum);

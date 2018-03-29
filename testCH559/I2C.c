@@ -50,7 +50,7 @@ sbit I2C_SDA = P0^3;
 功能：延时，模拟I2C总线专用
 说明：这个函数延时时间为((6+2+I2C_DELAY_VALUE*4+4)/主频)uS
 */
-static void I2C_Delay(){
+static void I2C_Delay() small{
 	u8 I2C_Delay_t = (I2C_DELAY_VALUE);
 	while(--I2C_Delay_t != 0);
 }
@@ -60,7 +60,7 @@ static void I2C_Delay(){
 功能：I2C总线初始化，使总线处于空闲状态
 说明：在main()函数的开始处，通常应当要执行一次本函数
 */
-void I2C_Init(){
+void I2C_Init() small{
 	// 将I2C_SCL和I2C_SDA设置成开漏
 	GPIO_SelMode(0, 5, 2);
 	GPIO_SelMode(0, 5, 3);
@@ -80,7 +80,7 @@ void I2C_Init(){
 	本函数也可以用来产生重复起始状态
 	本函数执行后，I2C总线处于忙状态
 */
-void I2C_Start(){
+void I2C_Start() small{
 	I2C_SDA = 1;
 	I2C_Delay();
 	I2C_SCL = 1;
@@ -97,7 +97,7 @@ void I2C_Start(){
 参数：
 	dat：要写到总线上的数据
 */ 
-void I2C_Write(u8 dat){
+void I2C_Write(u8 dat) small{
 	u8 t = 8;
 	do{
 		I2C_SDA = (bit)(dat & 0x80);
@@ -115,7 +115,7 @@ void I2C_Write(u8 dat){
 功能：从从机读取1个字节的数据
 返回：读取的一个字节数据
 */
-u8 I2C_Read(){
+u8 I2C_Read() small{
 	u8 dat;
 	u8 t = 8;
 	I2C_SDA = 1;	// 在读取数据之前，要把SDA拉高
@@ -143,7 +143,7 @@ u8 I2C_Read(){
 	从机在收到每个字节的数据后，要产生应答位
 	从机在收到最后1个字节的数据后，一般要产生非应答位
 */
-bit I2C_GetAck(){
+bit I2C_GetAck() small{
 	u16 timeout = I2C_WAIT_ACK_TIMEOUT;
 	I2C_SDA = 1;
 	I2C_Delay();
@@ -171,7 +171,7 @@ bit I2C_GetAck(){
 	主机在接收完每一个字节的数据后，都应当产生应答位
 	主机在接收完最后一个字节的数据后，应当产生非应答位
 */
-void I2C_PutAck(bit ack){
+void I2C_PutAck(bit ack) small{
 	I2C_SDA = ack;
 	I2C_Delay();
 	I2C_SCL = 1;
@@ -188,7 +188,7 @@ void I2C_PutAck(bit ack){
 	不论SDA和SCL处于什么电平状态，本函数总能正确产生停止状态
 	本函数执行后，I2C总线处于空闲状态
 */
-void I2C_Stop(){
+void I2C_Stop() small{
 	u16 t = I2C_STOP_WAIT_VALUE;
 	I2C_SDA = 0;
 	I2C_Delay();
@@ -205,7 +205,7 @@ void I2C_Stop(){
 说明：
 	主机企图向器件写地址，如果器件产生应答，则说明该器件合法
 */
-void CheckI2CSlaveValidity(){
+void CheckI2CSlaveValidity() small{
 	u8 i = 0;
 	printf("Start checking slaves!\r\n");
 	I2C_Init();
@@ -241,7 +241,7 @@ void CheckI2CSlaveValidity(){
 	本函数能够很好地适应所有常见的I2C器件，不论其是否有子地址
 	当从机没有子地址时，参数SubAddr任意，而SubMod应当为0
 */
-s8 I2C_Puts(u8 SlaveAddr, u16 SubAddr, u8 SubMod, u8* dat, u16 Size){
+s8 I2C_Puts(u8 SlaveAddr, u16 SubAddr, u8 SubMod, u8* dat, u16 Size) small{
 	// 定义临时变量
 	u8 i;
 	u8 a[3];
@@ -305,7 +305,7 @@ s8 I2C_Puts(u8 SlaveAddr, u16 SubAddr, u8 SubMod, u8* dat, u16 Size){
 	本函数能够很好地适应所有常见的I2C器件，不论其是否有子地址
 	当从机没有子地址时，参数SubAddr任意，而SubMod应当为0
 */
-s8 I2C_Gets(u8 SlaveAddr, u16 SubAddr, u8 SubMod, u8* dat, u16 Size){
+s8 I2C_Gets(u8 SlaveAddr, u16 SubAddr, u8 SubMod, u8* dat, u16 Size) small{
 	// 定义临时变量
 	u8 i;
 	u8 a[3];

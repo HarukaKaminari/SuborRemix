@@ -13,6 +13,10 @@ void EXPINTERFACE_InitMode1() small;
 void EXPINTERFACE_UpdateMode1() small;
 void EXPINTERFACE_InitMode2() small;
 void EXPINTERFACE_UpdateMode2() small;
+void EXPINTERFACE_InitMode3() small;
+void EXPINTERFACE_UpdateMode3() small;
+void EXPINTERFACE_InitMode4() small;
+void EXPINTERFACE_UpdateMode4() small;
 
 
 #endif	/* EXP_INTERFACE_H_ */

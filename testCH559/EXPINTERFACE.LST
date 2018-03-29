@@ -1,4 +1,4 @@
-C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/19/2018 18:17:07 PAGE 1   
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 1   
 
 
 C51 COMPILER V9.52.0.0, COMPILATION OF MODULE EXPINTERFACE
@@ -10,384 +10,548 @@ line level    source
    1          #include "EXPINTERFACE.h"
    2          #include "GPIO.h"
    3          #include "KEYBOARD.h"
-   4          
+   4          #include "KeyCode.h"
    5          
-   6          // ¸ù¾ÝNO$NESÎÄµµµÄËµÃ÷£¬ÀÏ°æFCµÄÊÖ±úÊÇ²»¿ÉÈ¡ÏÂµÄ£¬ËùÒÔµÚÈý·½ÊÖ±úÖ»ÄÜ²åµ½À©Õ¹¿Ú¡£
-   7          // µ«ÊÇÀ©Õ¹¿ÚÈ±ÉÙJ1D0ÐÅºÅ£¬ËùÒÔµÚÈý·½ÊÖ±úÖ»ÄÜ×÷Îª2PÊÖ±ú£¬»òÕß3P/4PÊÖ±ú¡£
-   8          // ÒýÓÃÔ­ÎÄ£ºthe 15pin connector lacks the joypad 1 signal, so at best, they could be shortcut with the jo
+   6          
+   7          // ¸ù¾ÝNO$NESÎÄµµµÄËµÃ÷£¬ÀÏ°æFCµÄÊÖ±úÊÇ²»¿ÉÈ¡ÏÂµÄ£¬ËùÒÔµÚÈý·½ÊÖ±úÖ»ÄÜ²åµ½À©Õ¹¿Ú¡£
+   8          // µ«ÊÇÀ©Õ¹¿ÚÈ±ÉÙJ1D0ÐÅºÅ£¬ËùÒÔµÚÈý·½ÊÖ±úÖ»ÄÜ×÷Îª2PÊÖ±ú£¬»òÕß3P/4PÊÖ±ú¡£
+   9          // ÒýÓÃÔ­ÎÄ£ºthe 15pin connector lacks the joypad 1 signal, so at best, they could be shortcut with the jo
              -ypad 2 signal, or wired as joypad 3/4; aside from 3/4-player games, many 1/2-player games also support that kind of inpu
              -t
-   9          // ×¢Òâ¹Ø¼ü´Ê£¬Íâ½ÓµÄµÚÈý·½ÊÖ±ú£¬ÊÇ¿ÉÒÔ×÷Îª2PÊÖ±úµÄ£¡
-  10          // ÔÙ¿¼ÂÇµ½ÐÂ°æFCµÄÁ½¸öÊÖ±ú¶¼ÊÇ¿ÉÒÔ°ÎÏÂÀ´µÄ£¬¿ÉÒÔµÃ³öÈçÏÂ½áÂÛ£º
-  11          // 1. J1D0ºÍJ2D0ÕâÁ½¸ö¶Ë¿ÚÔÊÐíÐü¿Õ£¬ÇÒÐü¿ÕµÈÐ§ÓÚ¸ßµçÆ½£¨ÎÞ°´¼ü°´ÏÂ£©¡£
-  12          // ¿É¼ûÕâÁ½¸ö¶Ë¿ÚÄÚ²¿ÓÐÉÏÀ­µç×è¡£
-  13          // 2. ÊÖ±úµÄDATAÊä³ö¶ËÊÇ¿ªÂ©Êä³ö½á¹¹£¬ÇÒÓÐÉÏÀ­µç×è¡£·ñÔòµ±Á½¸ö2PÊÖ±úÊä³ö²»Í¬µçÆ½µÄÊ±ºò¾Í»áÉÕÐ¾Æ¬¡£
-  14          // ÒòÎªÖ»ÓÐ¿ªÂ©²Å¿ÉÒÔÊµÏÖ¡°ÏßÓë¡±£¬ÆäËûÊä³ö½á¹¹µÄGPIO²»ÄÜÖ±½Ó°ÑÁ½¸öÉè±¸²¢ÁªÔÚÒ»Æð¡£
-  15          // »ùÓÚÒÔÉÏ½áÂÛ£¬J1D0ºÍJ2D0ÕâÁ½¸ö¶Ë¿Ú¿ÉÒÔ²»ÓÃÉÏÀ­µç×è¡£
-  16          // ÔÙ¸ù¾ÝFCµçÂ·Í¼£¬ÑéÖ¤ÁËÎÒµÄÍÆ¶Ï¡£J1D0~J1D1¡¢J2D0~J2D4¶¼ÓÐÉÏÀ­µç×è£¬Òò´ËÕâÀï¿ÉÒÔ²»Ê¹ÓÃÉÏÀ­¡£
-  17          /*
-  18          OUT0    Port -> MCU             ¸ß×èÊäÈë                                P2.5
-  19          OUT1    Port -> MCU             ¸ß×èÊäÈë                                P2.6
-  20          OUT2    Port -> MCU             ¸ß×èÊäÈë                                P2.7
-  21          
-  22          J1CLK   Port -> MCU             ¸ß×èÊäÈë                                P4.6£¨²»¿ÉÎ»Ñ°Ö·£©
-  23          J1D0    MCU -> Port             ¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­                P3.2
-  24          J1D1    MCU -> Port             ¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­                P3.4
-  25          J1D2    NC
-  26          J1D3    NC
-  27          J1D4    NC
-  28          
-  29          J2CLK   Port -> MCU             ¸ß×èÊäÈë                                P4.7£¨²»¿ÉÎ»Ñ°Ö·£©
-  30          J2D0    MCU -> Port             ¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­                P1.2
-  31          J2D1    MCU -> Port             ¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­                P1.4
-  32          J2D2    MCU -> Port             ¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­                P1.5
-  33          J2D3    MCU -> Port             ¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­                P1.6
-  34          J2D4    MCU -> Port             ¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­                P1.7
-  35          */
-  36          sbit OUT0 = P2^5;
-  37          sbit OUT1 = P2^6;
-  38          sbit OUT2 = P2^7;
-  39          sbit J1D0 = P3^2;
-  40          sbit J1D1 = P3^4;
-  41          sbit J2D0 = P1^2;
-  42          sbit J2D1 = P1^4;
-  43          sbit J2D2 = P1^5;
-  44          sbit J2D3 = P1^6;
-  45          sbit J2D4 = P1^7;
-  46          #define JOYCLK  P4_IN
-  47          
-  48          static u8 data keyValue_1P;
-  49          static u8 data keyValue_2P;
-  50          static u8 data keyValue_3P;
-  51          static u8 data keyValue_4P;
-  52          static u8 data keyValue_Keyboard;
+  10          // ×¢Òâ¹Ø¼ü´Ê£¬Íâ½ÓµÄµÚÈý·½ÊÖ±ú£¬ÊÇ¿ÉÒÔ×÷Îª2PÊÖ±úµÄ£¡
+  11          // ÔÙ¿¼ÂÇµ½ÐÂ°æFCµÄÁ½¸öÊÖ±ú¶¼ÊÇ¿ÉÒÔ°ÎÏÂÀ´µÄ£¬¿ÉÒÔµÃ³öÈçÏÂ½áÂÛ£º
+  12          // 1. J1D0ºÍJ2D0ÕâÁ½¸ö¶Ë¿ÚÔÊÐíÐü¿Õ£¬ÇÒÐü¿ÕµÈÐ§ÓÚ¸ßµçÆ½£¨ÎÞ°´¼ü°´ÏÂ£©¡£
+  13          // ¿É¼ûÕâÁ½¸ö¶Ë¿ÚÄÚ²¿ÓÐÉÏÀ­µç×è¡£
+  14          // 2. ÊÖ±úµÄDATAÊä³ö¶ËÊÇ¿ªÂ©Êä³ö½á¹¹£¬ÇÒÓÐÉÏÀ­µç×è¡£·ñÔòµ±Á½¸ö2PÊÖ±úÊä³ö²»Í¬µçÆ½µÄÊ±ºò¾Í»áÉÕÐ¾Æ¬¡£
+  15          // ÒòÎªÖ»ÓÐ¿ªÂ©²Å¿ÉÒÔÊµÏÖ¡°ÏßÓë¡±£¬ÆäËûÊä³ö½á¹¹µÄGPIO²»ÄÜÖ±½Ó°ÑÁ½¸öÉè±¸²¢ÁªÔÚÒ»Æð¡£
+  16          // »ùÓÚÒÔÉÏ½áÂÛ£¬J1D0ºÍJ2D0ÕâÁ½¸ö¶Ë¿Ú¿ÉÒÔ²»ÓÃÉÏÀ­µç×è¡£
+  17          // ÔÙ¸ù¾ÝFCµçÂ·Í¼£¬ÑéÖ¤ÁËÎÒµÄÍÆ¶Ï¡£J1D0~J1D1¡¢J2D0~J2D4¶¼ÓÐÉÏÀ­µç×è£¬Òò´ËÕâÀï¿ÉÒÔ²»Ê¹ÓÃÉÏÀ­¡£
+  18          /*
+  19          OUT0    Port -> MCU             ¸ß×èÊäÈë                                P2.5
+  20          OUT1    Port -> MCU             ¸ß×èÊäÈë                                P2.6
+  21          OUT2    Port -> MCU             ¸ß×èÊäÈë                                P2.7
+  22          
+  23          J1CLK   Port -> MCU             ¸ß×èÊäÈë                                P4.6£¨²»¿ÉÎ»Ñ°Ö·£©
+  24          J1D0    MCU -> Port             ¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­                P3.2
+  25          J1D1    MCU -> Port             ¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­                P3.4
+  26          J1D2    NC
+  27          J1D3    NC
+  28          J1D4    NC
+  29          
+  30          J2CLK   Port -> MCU             ¸ß×èÊäÈë                                P4.7£¨²»¿ÉÎ»Ñ°Ö·£©
+  31          J2D0    MCU -> Port             ¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­                P1.2
+  32          J2D1    MCU -> Port             ¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­                P1.4
+  33          J2D2    MCU -> Port             ¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­                P1.5
+  34          J2D3    MCU -> Port             ¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­                P1.6
+  35          J2D4    MCU -> Port             ¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­                P1.7
+  36          */
+  37          sbit OUT0 = P2^5;
+  38          sbit OUT1 = P2^6;
+  39          sbit OUT2 = P2^7;
+  40          sbit J1D0 = P3^2;
+  41          sbit J1D1 = P3^4;
+  42          sbit J2D0 = P1^2;
+  43          sbit J2D1 = P1^4;
+  44          sbit J2D2 = P1^5;
+  45          sbit J2D3 = P1^6;
+  46          sbit J2D4 = P1^7;
+  47          #define JOYCLK  P4_IN
+  48          
+  49          static u8 data keyValue_1P;
+  50          static u8 data keyValue_2P;
+  51          static u8 data keyValue_3P;
+  52          static u8 data keyValue_4P;
   53          
-C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/19/2018 18:17:07 PAGE 2   
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 2   
 
-  54          static u8 data Register_1P = 0; // 1PÊÖ±ú¼Ä´æÆ÷
-  55          static u8 data Register_2P = 0; // 2PÊÖ±ú¼Ä´æÆ÷
-  56          static u8 data Register_3P = 0; // 3PÊÖ±ú¼Ä´æÆ÷
-  57          static u8 data Register_4P = 0; // 4PÊÖ±ú¼Ä´æÆ÷
-  58          
-  59          bit OUT0_curr = 0;
-  60          bit OUT1_curr = 0;
-  61          bit OUT2_curr = 0;
-  62          bit J1CLK_curr = 0;
-  63          bit J2CLK_curr = 0;
-  64          bit OUT0_prev = 0;
-  65          bit OUT1_prev = 0;
-  66          bit OUT2_prev = 0;
-  67          bit J1CLK_prev = 0;
-  68          bit J2CLK_prev = 0;
-  69          
-  70          bit isReady = 0;        // ÊÇ·ñ¼ì²âµ½ÁËËø´æÐÅºÅ
+  54          static u8 data Register_1P = 0;                 // 1PÊÖ±ú¼Ä´æÆ÷
+  55          static u8 data Register_2P = 0;                 // 2PÊÖ±ú¼Ä´æÆ÷
+  56          static u8 data Register_3P = 0;                 // 3PÊÖ±ú¼Ä´æÆ÷
+  57          static u8 data Register_4P = 0;                 // 4PÊÖ±ú¼Ä´æÆ÷
+  58          static u8 data Register_Keyboard = 0;   // ¼üÅÌ¼Ä´æÆ÷
+  59          static u8 data row = 0;                                 // ¼üÅÌÕýÔÚÉ¨ÃèµÚ¼¸ÐÐ
+  60          
+  61          bit OUT0_curr = 0;
+  62          bit OUT1_curr = 0;
+  63          bit OUT2_curr = 0;
+  64          bit J1CLK_curr = 0;
+  65          bit J2CLK_curr = 0;
+  66          bit OUT0_prev = 0;
+  67          bit OUT1_prev = 0;
+  68          bit OUT2_prev = 0;
+  69          bit J1CLK_prev = 0;
+  70          bit J2CLK_prev = 0;
   71          
-  72          
-  73          static void EXPINTERFACE_RefreshOUT0() small{
-  74   1              OUT0_curr = OUT0;
-  75   1      }
-  76          static bit EXPINTERFACE_IsRisingEdgeOfOUT0() small{
-  77   1              return OUT0_curr == 1 && OUT0_prev == 0;
+  72          bit isReady = 0;        // ÊÇ·ñ¼ì²âµ½ÁËËø´æÐÅºÅ
+  73          bit isLower = 0;        // ÊÇ·ñ²ÉÑù¼üÅÌ¼Ä´æÆ÷ÖµµÄµÍ4Î»
+  74          
+  75          
+  76          static void EXPINTERFACE_RefreshOUT0() small{
+  77   1              OUT0_curr = OUT0;
   78   1      }
-  79          static bit EXPINTERFACE_IsFallingEdgeOfOUT0() small{
-  80   1              return OUT0_curr == 0 && OUT0_prev == 1;
+  79          static bit EXPINTERFACE_IsRisingEdgeOfOUT0() small{
+  80   1              return OUT0_curr == 1 && OUT0_prev == 0;
   81   1      }
-  82          static void EXPINTERFACE_UpdateOUT0() small{
-  83   1              OUT0_prev = OUT0_curr;
+  82          static bit EXPINTERFACE_IsFallingEdgeOfOUT0() small{
+  83   1              return OUT0_curr == 0 && OUT0_prev == 1;
   84   1      }
-  85          
-  86          static void EXPINTERFACE_RefreshJ1CLK() small{
-  87   1              J1CLK_curr = (JOYCLK >> 6) & 1;
-  88   1      }
-  89          static bit EXPINTERFACE_IsRisingEdgeOfJ1CLK() small{
-  90   1              return J1CLK_curr == 1 && J1CLK_prev == 0;
+  85          static void EXPINTERFACE_UpdateOUT0() small{
+  86   1              OUT0_prev = OUT0_curr;
+  87   1      }
+  88          
+  89          static void EXPINTERFACE_RefreshOUT1() small{
+  90   1              OUT1_curr = OUT1;
   91   1      }
-  92          static bit EXPINTERFACE_IsFallingEdgeOfJ1CLK() small{
-  93   1              return J1CLK_curr == 0 && J1CLK_prev == 1;
+  92          static bit EXPINTERFACE_IsRisingEdgeOfOUT1() small{
+  93   1              return OUT1_curr == 1 && OUT1_prev == 0;
   94   1      }
-  95          static void EXPINTERFACE_UpdateJ1CLK() small{
-  96   1              J1CLK_prev = J1CLK_curr;
+  95          static bit EXPINTERFACE_IsFallingEdgeOfOUT1() small{
+  96   1              return OUT1_curr == 0 && OUT1_prev == 1;
   97   1      }
-  98          
-  99          static void EXPINTERFACE_RefreshJ2CLK() small{
- 100   1              J2CLK_curr = (JOYCLK >> 7) & 1;
- 101   1      }
- 102          static bit EXPINTERFACE_IsRisingEdgeOfJ2CLK() small{
- 103   1              return J2CLK_curr == 1 && J2CLK_prev == 0;
+  98          static void EXPINTERFACE_UpdateOUT1() small{
+  99   1              OUT1_prev = OUT1_curr;
+ 100   1      }
+ 101          
+ 102          static void EXPINTERFACE_RefreshJ1CLK() small{
+ 103   1              J1CLK_curr = (JOYCLK >> 6) & 1;
  104   1      }
- 105          static bit EXPINTERFACE_IsFallingEdgeOfJ2CLK() small{
- 106   1              return J2CLK_curr == 0 && J2CLK_prev == 1;
+ 105          static bit EXPINTERFACE_IsRisingEdgeOfJ1CLK() small{
+ 106   1              return J1CLK_curr == 1 && J1CLK_prev == 0;
  107   1      }
- 108          static void EXPINTERFACE_UpdateJ2CLK() small{
- 109   1              J2CLK_prev = J2CLK_curr;
+ 108          static bit EXPINTERFACE_IsFallingEdgeOfJ1CLK() small{
+ 109   1              return J1CLK_curr == 0 && J1CLK_prev == 1;
  110   1      }
- 111          
- 112          // ¶Á¼üÂë»º³åÇø£¬ÉèÖÃ1P°´¼ü×´Ì¬
- 113          static void EXPINTERFACE_Set1PKeyStatus() small{
- 114   1              u8 i = 0;
- 115   1              // A¡¢B¡¢Start¡¢Select¡¢Up¡¢Down¡¢Left¡¢Right
-C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/19/2018 18:17:07 PAGE 3   
+ 111          static void EXPINTERFACE_UpdateJ1CLK() small{
+ 112   1              J1CLK_prev = J1CLK_curr;
+ 113   1      }
+ 114          
+ 115          static void EXPINTERFACE_RefreshJ2CLK() small{
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 3   
 
- 116   1              static const u8 code p[] = {0x07, 0x04, 0x16, 0x1A, 0x2C, 0x28, 0x0D, 0x0E};
- 117   1              u8* keyCodeBuf = KEYBOARD_GetBuf();
- 118   1              keyValue_1P = 0;
- 119   1              for(i=0;i<8;++i){
- 120   2                      keyValue_1P |= keyCodeBuf[p[i]];
- 121   2                      keyValue_1P <<= 1;
- 122   2              }
+ 116   1              J2CLK_curr = (JOYCLK >> 7) & 1;
+ 117   1      }
+ 118          static bit EXPINTERFACE_IsRisingEdgeOfJ2CLK() small{
+ 119   1              return J2CLK_curr == 1 && J2CLK_prev == 0;
+ 120   1      }
+ 121          static bit EXPINTERFACE_IsFallingEdgeOfJ2CLK() small{
+ 122   1              return J2CLK_curr == 0 && J2CLK_prev == 1;
  123   1      }
- 124          
- 125          // ¶Á¼üÂë»º³åÇø£¬ÉèÖÃ2P°´¼ü×´Ì¬
- 126          static void EXPINTERFACE_Set2PKeyStatus() small{
- 127   1              u8 i = 0;
- 128   1              // A¡¢B¡¢Start¡¢Select¡¢Up¡¢Down¡¢Left¡¢Right
- 129   1              static const u8 code p[] = {0x4F, 0x50, 0x51, 0x52, 0x62, 0x58, 0x59, 0x5A};
- 130   1              u8* keyCodeBuf = KEYBOARD_GetBuf();
- 131   1              keyValue_2P = 0;
- 132   1              for(i=0;i<8;++i){
- 133   2                      keyValue_2P |= keyCodeBuf[p[i]];
- 134   2                      keyValue_2P <<= 1;
- 135   2              }
- 136   1      }
- 137          
- 138          // ¶Á¼üÂë»º³åÇø£¬ÉèÖÃ3P°´¼ü×´Ì¬
- 139          static void EXPINTERFACE_Set3PKeyStatus() small{
- 140   1              u8 i = 0;
- 141   1              // A¡¢B¡¢Start¡¢Select¡¢Up¡¢Down¡¢Left¡¢Right
- 142   1              static const u8 code p[] = {0x07, 0x04, 0x16, 0x1A, 0x2C, 0x28, 0x0D, 0x0E};
- 143   1              u8* keyCodeBuf = KEYBOARD_GetBuf();
- 144   1              keyValue_3P = 0;
- 145   1              for(i=0;i<8;++i){
- 146   2                      keyValue_3P |= keyCodeBuf[p[i]];
- 147   2                      keyValue_3P <<= 1;
- 148   2              }
- 149   1      }
- 150          
- 151          // ¶Á¼üÂë»º³åÇø£¬ÉèÖÃ4P°´¼ü×´Ì¬
- 152          static void EXPINTERFACE_Set4PKeyStatus() small{
- 153   1              u8 i = 0;
- 154   1              // A¡¢B¡¢Start¡¢Select¡¢Up¡¢Down¡¢Left¡¢Right
- 155   1              static const u8 code p[] = {0x4F, 0x50, 0x51, 0x52, 0x62, 0x58, 0x59, 0x5A};
- 156   1              u8* keyCodeBuf = KEYBOARD_GetBuf();
- 157   1              keyValue_4P = 0;
- 158   1              for(i=0;i<8;++i){
- 159   2                      keyValue_4P |= keyCodeBuf[p[i]];
- 160   2                      keyValue_4P <<= 1;
- 161   2              }
- 162   1      }
- 163          
- 164          // ³õÊ¼»¯ËùÓÐGPIO¡£²ÎÊý´ú±íÊÇ·ñÆôÓÃ¸ÃÉè±¸
- 165          void EXPINTERFACE_Init(bit isEnable) small{
- 166   1              u8 i = 0;
- 167   1              if(isEnable){
- 168   2                      // P1¿ÚÉèÖÃ³É¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­
- 169   2                      for(i=0;i<8;++i)GPIO_SelMode(1, 3, i);
- 170   2                      // P2¿ÚÉèÖÃ³É¸ß×èÊäÈë£¬ÎÞÉÏÀ­
- 171   2                      for(i=0;i<8;++i)GPIO_SelMode(2, 0, i);
- 172   2                      // P3¿ÚÉèÖÃ³É¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­
- 173   2                      for(i=0;i<8;++i)GPIO_SelMode(3, 3, i);
- 174   2                      // P4¿ÚÉèÖÃ³É¸ß×èÊäÈë£¬ÎÞÉÏÀ­
- 175   2                      for(i=0;i<8;++i)GPIO_SelP4Mode(i, 0, 0);
- 176   2              }else{
- 177   2                      // P1¿ÚÉèÖÃ³É¸ß×èÊäÈë£¬ÎÞÉÏÀ­
-C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/19/2018 18:17:07 PAGE 4   
+ 124          static void EXPINTERFACE_UpdateJ2CLK() small{
+ 125   1              J2CLK_prev = J2CLK_curr;
+ 126   1      }
+ 127          
+ 128          // ¶Á¼üÂë»º³åÇø£¬ÉèÖÃ1P°´¼ü×´Ì¬
+ 129          static void EXPINTERFACE_Set1PKeyStatus() small{
+ 130   1              u8 i = 0;
+ 131   1              // A¡¢B¡¢Start¡¢Select¡¢Up¡¢Down¡¢Left¡¢Right
+ 132   1              static const u8 code p[] = {0x07, 0x04, 0x16, 0x1A, 0x2C, 0x28, 0x0D, 0x0E};
+ 133   1              u8* keyCodeBuf = KEYBOARD_GetBuf();
+ 134   1              keyValue_1P = 0;
+ 135   1              for(i=0;i<8;++i){
+ 136   2                      keyValue_1P |= keyCodeBuf[p[i]];
+ 137   2                      keyValue_1P <<= 1;
+ 138   2              }
+ 139   1      }
+ 140          
+ 141          // ¶Á¼üÂë»º³åÇø£¬ÉèÖÃ2P°´¼ü×´Ì¬
+ 142          static void EXPINTERFACE_Set2PKeyStatus() small{
+ 143   1              u8 i = 0;
+ 144   1              // A¡¢B¡¢Start¡¢Select¡¢Up¡¢Down¡¢Left¡¢Right
+ 145   1              static const u8 code p[] = {0x4F, 0x50, 0x51, 0x52, 0x62, 0x58, 0x59, 0x5A};
+ 146   1              u8* keyCodeBuf = KEYBOARD_GetBuf();
+ 147   1              keyValue_2P = 0;
+ 148   1              for(i=0;i<8;++i){
+ 149   2                      keyValue_2P |= keyCodeBuf[p[i]];
+ 150   2                      keyValue_2P <<= 1;
+ 151   2              }
+ 152   1      }
+ 153          
+ 154          // ¶Á¼üÂë»º³åÇø£¬ÉèÖÃ3P°´¼ü×´Ì¬
+ 155          static void EXPINTERFACE_Set3PKeyStatus() small{
+ 156   1              u8 i = 0;
+ 157   1              // A¡¢B¡¢Start¡¢Select¡¢Up¡¢Down¡¢Left¡¢Right
+ 158   1              static const u8 code p[] = {0x07, 0x04, 0x16, 0x1A, 0x2C, 0x28, 0x0D, 0x0E};
+ 159   1              u8* keyCodeBuf = KEYBOARD_GetBuf();
+ 160   1              keyValue_3P = 0;
+ 161   1              for(i=0;i<8;++i){
+ 162   2                      keyValue_3P |= keyCodeBuf[p[i]];
+ 163   2                      keyValue_3P <<= 1;
+ 164   2              }
+ 165   1      }
+ 166          
+ 167          // ¶Á¼üÂë»º³åÇø£¬ÉèÖÃ4P°´¼ü×´Ì¬
+ 168          static void EXPINTERFACE_Set4PKeyStatus() small{
+ 169   1              u8 i = 0;
+ 170   1              // A¡¢B¡¢Start¡¢Select¡¢Up¡¢Down¡¢Left¡¢Right
+ 171   1              static const u8 code p[] = {0x4F, 0x50, 0x51, 0x52, 0x62, 0x58, 0x59, 0x5A};
+ 172   1              u8* keyCodeBuf = KEYBOARD_GetBuf();
+ 173   1              keyValue_4P = 0;
+ 174   1              for(i=0;i<8;++i){
+ 175   2                      keyValue_4P |= keyCodeBuf[p[i]];
+ 176   2                      keyValue_4P <<= 1;
+ 177   2              }
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 4   
 
- 178   2                      for(i=0;i<8;++i)GPIO_SelMode(1, 0, i);
- 179   2                      // P2¿ÚÉèÖÃ³É¸ß×èÊäÈë£¬ÎÞÉÏÀ­
- 180   2                      for(i=0;i<8;++i)GPIO_SelMode(2, 0, i);
- 181   2                      // P3¿ÚÉèÖÃ³É¸ß×èÊäÈë£¬ÎÞÉÏÀ­
- 182   2                      for(i=0;i<8;++i)GPIO_SelMode(3, 0, i);
- 183   2                      // P4¿ÚÉèÖÃ³É¸ß×èÊäÈë£¬ÎÞÉÏÀ­
- 184   2                      for(i=0;i<8;++i)GPIO_SelP4Mode(i, 0, 0);
- 185   2              }
- 186   1              // P1~P4¿ÚÇý¶¯ÄÜÁ¦Îª5mA
- 187   1              GPIO_DrivCap(1, 0);
- 188   1              GPIO_DrivCap(2, 0);
- 189   1              GPIO_DrivCap(3, 0);
- 190   1              GPIO_DrivCap(4, 0);
- 191   1      }
- 192          
- 193          // ³õÊ¼»¯Mode0¡£ÔÚÕâÖÖÄ£Ê½ÏÂ£¬USB¹¦ÄÜÍêÈ«±»ÆÁ±Î£¬ËùÓÐ¶Ë¿Ú¾ùÎª¸ß×è
- 194          void EXPINTERFACE_InitMode0() small{
- 195   1              EXPINTERFACE_Init(0);
- 196   1      }
- 197          
- 198          void EXPINTERFACE_UpdateMode0() small{
- 199   1              
- 200   1      }
- 201          
- 202          // ³õÊ¼»¯Mode1¡£ÔÚÕâÖÖÄ£Ê½ÏÂ£¬USB¼üÅÌ±»ÊÓÎª1PºÍ2PÊÖ±ú¡£
- 203          // ×¢Òâ£¬Èç¹ûÕæÊµ1PÊÖ±úºÍ¼üÅÌÐéÄâ1PÊÖ±ú£¨»òÕæÊµ2PÊÖ±úºÍ¼üÅÌÐéÄâ2PÊÖ±ú£©¹²´æµÄ»°£¬
- 204          // Ö»ÒªÓÐÆäÖÐÒ»¸öÊÖ±úÊä³öµÍµçÆ½¼üÖµ£¨¼ü°´ÏÂ£©£¬ÔòÁíÒ»¸öÊÖ±ú²»¹ÜÊÇÊ²Ã´µçÆ½£¬¶¼»á±»À­µÍ¡£
- 205          // Õâ¾Íµ¼ÖÂÁËÁ½¸öÊÖ±úµÄÍ¬¼üÖµ°´¼üÊÇ¡°»ò¡±¹ØÏµ£¬¼´Ö»ÒªÓÐÒ»¸öÊÖ±ú°´¼ü°´ÏÂ£¬ÄÇ¸ö°´¼ü¾Í»á±»ÊÓÎª°´ÏÂ¡£
- 206          // ÓÉ´Ë¿É¼û£¬ÐéÄâ1P2PÊÖ±ú¿ÉÒÔºÍÕæÊµÊÖ±ú¹²´æ£¬Í¬Ê±¹¤×÷¡£
- 207          void EXPINTERFACE_InitMode1() small{
- 208   1              EXPINTERFACE_Init(1);
- 209   1              Register_1P = 0;
- 210   1              Register_2P = 0;
- 211   1              OUT0_curr = 0;
- 212   1              J1CLK_curr = 0;
- 213   1              J2CLK_curr = 0;
- 214   1              OUT0_prev = 0;
- 215   1              J1CLK_prev = 0;
- 216   1              J2CLK_prev = 0;
- 217   1              
- 218   1              isReady = 0;
- 219   1      }
- 220          
- 221          void EXPINTERFACE_UpdateMode1() small{
- 222   1              // »ñµÃ1PºÍ2P°´¼ü×´Ì¬
- 223   1              EXPINTERFACE_Set1PKeyStatus();
- 224   1              EXPINTERFACE_Set2PKeyStatus();
- 225   1              // ¶ÁOUT0£¨Ëø´æÐÅºÅ£©
- 226   1              EXPINTERFACE_RefreshOUT0();
- 227   1              // ¶ÁJ1CLK£¨1PÊ±ÖÓ£©
- 228   1              EXPINTERFACE_RefreshJ1CLK();
- 229   1              // ¶ÁJ2CLK£¨2PÊ±ÖÓ£©
- 230   1              EXPINTERFACE_RefreshJ2CLK();
- 231   1              
- 232   1              // ¼ì²âÊÇ·ñ³öÏÖËø´æÐÅºÅ
- 233   1              if(EXPINTERFACE_IsRisingEdgeOfOUT0()){
- 234   2                      // ³öÏÖËø´æÐÅºÅ£¡ÔÊÐíºóÐøÂß¼­
- 235   2                      isReady = 1;
- 236   2              }
- 237   1              if(isReady){
- 238   2                      // ¼ì²âÊÇ·ñ½áÊøËø´æ
- 239   2                      if(EXPINTERFACE_IsFallingEdgeOfOUT0()){
-C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/19/2018 18:17:07 PAGE 5   
+ 178   1      }
+ 179          
+ 180          // ¶Á¼üÂë»º³åÇø£¬ÉèÖÃÐ¡°ÔÍõ¼üÅÌ°´¼ü¼Ä´æÆ÷
+ 181          static void EXPINTERFACE_SetSuborKeyboardKeyStatus(u8 row) small{
+ 182   1              u8 i = 0;
+ 183   1              static const u8 code keyMap[] = {
+ 184   1                      KC_4,                   KC_G,                   KC_F,                   KC_C,                   KC_F2,  KC_E,           KC_5,                   KC_V,
+ 185   1                      KC_2,                   KC_D,                   KC_S,                   KC_End,                 KC_F1,  KC_W,           KC_3,                   KC_X,
+ 186   1                      KC_Insert,              KC_Backspace,   KC_PageDown,    KC_RightArrow,  KC_F8,  KC_PageUp,      KC_Delete,              KC_Home,
+ 187   1                      KC_9,                   KC_I,                   KC_L,                   KC_Comma,               KC_F5,  KC_O,           KC_0,                   KC_Period,
+ 188   1                      KC_RBracket,    KC_Enter,               KC_UpArrow,             KC_LeftArrow,   KC_F7,  KC_LBracket,KC_BackSlash,       KC_DownArrow,
+ 189   1                      KC_Q,                   KC_CapsLock,    KC_Z,                   KC_Tab,                 KC_Esc, KC_A,           KC_1,                   KC_LControl,
+ 190   1                      KC_7,                   KC_Y,                   KC_K,                   KC_M,                   KC_F4,  KC_U,           KC_8,                   KC_J,
+ 191   1                      KC_Minus,               KC_SemiColon,   KC_Quote,               KC_Slash,               KC_F6,  KC_P,           KC_Equal,               KC_LShift,
+ 192   1                      KC_T,                   KC_H,                   KC_N,                   KC_Space,               KC_F3,  KC_R,           KC_6,                   KC_B,
+ 193   1                      KC_Null,                KC_Null,                KC_Null,                KC_Null,                0xFF,   KC_Null,        KC_Null,                KC_Null,
+ 194   1                      KC_LWin,                KC_KP_4,                KC_KP_7,                KC_F11,                 KC_F12, KC_KP_1,        KC_KP_2,                KC_KP_8,
+ 195   1                      KC_KP_Subtract, KC_KP_Add,              KC_KP_Multiply, KC_KP_9,                KC_F10, KC_KP_5,        KC_KP_Divide,   KC_KP_NumLock,
+ 196   1                      KC_Grave,               KC_KP_6,                KC_Pause,               KC_Space,               KC_F9,  KC_KP_3,        KC_KP_Dot,              KC_KP_0,
+ 197   1              };
+ 198   1              Register_Keyboard = 0;
+ 199   1              for(i=0;i<13;++i){
+ 200   2                      if(KEYBOARD_IsKeyHold(keyMap[row * 8 + i])){
+ 201   3                              Register_Keyboard |= 1;
+ 202   3                      }
+ 203   2                      Register_Keyboard <<= 1;
+ 204   2              }
+ 205   1      }
+ 206          
+ 207          // ¶Á¼üÂë»º³åÇø£¬ÉèÖÃFamilyBasic¼üÅÌ°´¼ü¼Ä´æÆ÷
+ 208          // ×¢Òâ£¡FamilyBasicµÄ¼üÅÌ²¼¾ÖºÍ°´¼ü£¬ºÍ³£ÓÃµÄ¼üÅÌÓÐ¼«´óµÄ²»Í¬¡£
+ 209          // ÉõÖÁÓÐÐ©¼üµÄÉÏµµ¼üÖµ£¬¶¼ºÍ³£ÓÃ¼üÅÌ²»Ò»Ñù¡£±ÈÈç³£ÓÃ¼üÅÌShift+2=@£¬µ«FamilyBasicÔòÊÇShift+2="£¬@ÓÐ×¨ÃÅµÄ°
+             -´¼ü¡£
+ 210          // Õâ¾Íµ¼ÖÂÏñÐ¡°ÔÍõ¼üÅÌÄÇÖÖÓ³Éä·½Ê½£¬¶ÔÓÃ»§À´ËµºÜÄÑ×öµ½Ö±¹ÛºÍ·½±ãÊäÈë¡£
+ 211          // Òò´ËÕâÀï²ÉÓÃÁíÒ»ÖÖÍêÈ«²»Í¬µÄÓ³Éä·½Ê½£º²»²ÉÓÃ¼üÂë£¬¶ø²ÉÓÃ¼üÖµ¡£
+ 212          // ¸ù¾Ý
+ 213          static void EXPINTERFACE_SetFamilyBasicKeyboardKeyStatus(u8 row) small{
+ 214   1              
+ 215   1      }
+*** WARNING C280 IN LINE 213 OF EXPINTERFACE.c: 'row': unreferenced local variable
+ 216          
+ 217          // ³õÊ¼»¯ËùÓÐGPIO¡£²ÎÊý´ú±íÊÇ·ñÆôÓÃ¸ÃÉè±¸
+ 218          void EXPINTERFACE_Init(bit isEnable) small{
+ 219   1              u8 i = 0;
+ 220   1              if(isEnable){
+ 221   2                      // P1¿ÚÉèÖÃ³É¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­
+ 222   2                      for(i=0;i<8;++i)GPIO_SelMode(1, 3, i);
+ 223   2                      // P2¿ÚÉèÖÃ³É¸ß×èÊäÈë£¬ÎÞÉÏÀ­
+ 224   2                      for(i=0;i<8;++i)GPIO_SelMode(2, 0, i);
+ 225   2                      // P3¿ÚÉèÖÃ³É¿ªÂ©Êä³ö£¬ÎÞÉÏÀ­
+ 226   2                      for(i=0;i<8;++i)GPIO_SelMode(3, 3, i);
+ 227   2                      // P4¿ÚÉèÖÃ³É¸ß×èÊäÈë£¬ÎÞÉÏÀ­
+ 228   2                      for(i=0;i<8;++i)GPIO_SelP4Mode(i, 0, 0);
+ 229   2              }else{
+ 230   2                      // P1¿ÚÉèÖÃ³É¸ß×èÊäÈë£¬ÎÞÉÏÀ­
+ 231   2                      for(i=0;i<8;++i)GPIO_SelMode(1, 0, i);
+ 232   2                      // P2¿ÚÉèÖÃ³É¸ß×èÊäÈë£¬ÎÞÉÏÀ­
+ 233   2                      for(i=0;i<8;++i)GPIO_SelMode(2, 0, i);
+ 234   2                      // P3¿ÚÉèÖÃ³É¸ß×èÊäÈë£¬ÎÞÉÏÀ­
+ 235   2                      for(i=0;i<8;++i)GPIO_SelMode(3, 0, i);
+ 236   2                      // P4¿ÚÉèÖÃ³É¸ß×èÊäÈë£¬ÎÞÉÏÀ­
+ 237   2                      for(i=0;i<8;++i)GPIO_SelP4Mode(i, 0, 0);
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 5   
 
- 240   3                              // Ëø´æÐÅºÅ½áÊø£¡°Ñ°´¼ü×´Ì¬Ëø´æµ½Á½¸öÊÖ±ú¼Ä´æÆ÷ÖÐ
- 241   3                              Register_1P = keyValue_1P;
- 242   3                              Register_2P = keyValue_2P;
- 243   3                              // Ëø´æµÄ¼üÖµÁ¢¿Ì³öÏÖÔÚ´®ÐÐÊý¾Ý¶Ë
- 244   3                              J1D0 = Register_1P & 1;
- 245   3                              J2D0 = Register_2P & 1;
- 246   3                              // ½øÈëÏÂÒ»¸ö×´Ì¬¡£ÔÚÕâÖ®ºó£¬°´¼ü×´Ì¬²»ÔÙÓ°ÏìÒÑ±»Ëø´æµÄ°´¼ü¼Ä´æÆ÷
- 247   3                      }
- 248   2                      // ¼ì²âÊÇ·ñ³öÏÖ1PÊ±ÖÓÉÏÉýÑØ
- 249   2                      if(EXPINTERFACE_IsRisingEdgeOfJ1CLK()){
- 250   3                              // 1PÊÖ±ú¼Ä´æÆ÷ÒÆÎ»
- 251   3                              Register_1P <<= 1;
- 252   3                              // Ëø´æµÄ¼üÖµÁ¢¿Ì³öÏÖÔÚ´®ÐÐÊý¾Ý¶Ë
- 253   3                              J1D0 = Register_1P & 1;
- 254   3                              // ½øÈëÏÂÒ»¸ö×´Ì¬
- 255   3                      }
- 256   2                      // ¼ì²âÊÇ·ñ³öÏÖ1PÊ±ÖÓÏÂ½µÑØ
- 257   2                      if(EXPINTERFACE_IsFallingEdgeOfJ1CLK()){
- 258   3                              // Õâ¸ö×´Ì¬ÏÂÃ»Ê²Ã´¿É×öµÄ
- 259   3                      }
- 260   2                      // ¼ì²âÊÇ·ñ³öÏÖ2PÊ±ÖÓÉÏÉýÑØ
- 261   2                      if(EXPINTERFACE_IsRisingEdgeOfJ2CLK()){
- 262   3                              // 2PÊÖ±ú¼Ä´æÆ÷ÒÆÎ»
- 263   3                              Register_2P <<= 1;
- 264   3                              // Ëø´æµÄ¼üÖµÁ¢¿Ì³öÏÖÔÚ´®ÐÐÊý¾Ý¶Ë
- 265   3                              J2D0 = Register_2P & 1;
- 266   3                              // ½øÈëÏÂÒ»¸ö×´Ì¬
- 267   3                      }
- 268   2                      // ¼ì²âÊÇ·ñ³öÏÖ2PÊ±ÖÓÏÂ½µÑØ
- 269   2                      if(EXPINTERFACE_IsFallingEdgeOfJ2CLK()){
- 270   3                              // Õâ¸ö×´Ì¬ÏÂÃ»Ê²Ã´¿É×öµÄ
- 271   3                      }
- 272   2              }
- 273   1              
- 274   1              // ¸üÐÂËø´æÐÅºÅ×´Ì¬
- 275   1              EXPINTERFACE_UpdateOUT0();
- 276   1              // ¸üÐÂ1PÊ±ÖÓÐÅºÅ×´Ì¬
- 277   1              EXPINTERFACE_UpdateJ1CLK();
- 278   1              // ¸üÐÂ2PÊ±ÖÓÐÅºÅ×´Ì¬
- 279   1              EXPINTERFACE_UpdateJ2CLK();
- 280   1      }
- 281          
- 282          // ³õÊ¼»¯Mode2¡£ÔÚÕâÖÖÄ£Ê½ÏÂ£¬USB¼üÅÌ±»ÊÓÎª3PºÍ4PÊÖ±ú¡£
- 283          void EXPINTERFACE_InitMode2() small{
- 284   1              EXPINTERFACE_Init(1);
- 285   1              Register_3P = 0;
- 286   1              Register_4P = 0;
- 287   1              OUT0_curr = 0;
- 288   1              J1CLK_curr = 0;
- 289   1              J2CLK_curr = 0;
- 290   1              OUT0_prev = 0;
- 291   1              J1CLK_prev = 0;
- 292   1              J2CLK_prev = 0;
- 293   1              
- 294   1              isReady = 0;
- 295   1      }
- 296          
- 297          void EXPINTERFACE_UpdateMode2() small{
- 298   1              // »ñµÃ3PºÍ4P°´¼ü×´Ì¬
- 299   1              EXPINTERFACE_Set3PKeyStatus();
- 300   1              EXPINTERFACE_Set4PKeyStatus();
- 301   1              // ¶ÁOUT0£¨Ëø´æÐÅºÅ£©
-C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/19/2018 18:17:07 PAGE 6   
+ 238   2              }
+ 239   1              // P1~P4¿ÚÇý¶¯ÄÜÁ¦Îª5mA
+ 240   1              GPIO_DrivCap(1, 0);
+ 241   1              GPIO_DrivCap(2, 0);
+ 242   1              GPIO_DrivCap(3, 0);
+ 243   1              GPIO_DrivCap(4, 0);
+ 244   1      }
+ 245          
+ 246          // ³õÊ¼»¯Mode0¡£ÔÚÕâÖÖÄ£Ê½ÏÂ£¬USB¹¦ÄÜÍêÈ«±»ÆÁ±Î£¬ËùÓÐ¶Ë¿Ú¾ùÎª¸ß×è
+ 247          void EXPINTERFACE_InitMode0() small{
+ 248   1              EXPINTERFACE_Init(0);
+ 249   1      }
+ 250          
+ 251          void EXPINTERFACE_UpdateMode0() small{
+ 252   1              
+ 253   1      }
+ 254          
+ 255          // ³õÊ¼»¯Mode1¡£ÔÚÕâÖÖÄ£Ê½ÏÂ£¬USB¼üÅÌ±»ÊÓÎª1PºÍ2PÊÖ±ú¡£
+ 256          // ×¢Òâ£¬Èç¹ûÕæÊµ1PÊÖ±úºÍ¼üÅÌÐéÄâ1PÊÖ±ú£¨»òÕæÊµ2PÊÖ±úºÍ¼üÅÌÐéÄâ2PÊÖ±ú£©¹²´æµÄ»°£¬
+ 257          // Ö»ÒªÓÐÆäÖÐÒ»¸öÊÖ±úÊä³öµÍµçÆ½¼üÖµ£¨¼ü°´ÏÂ£©£¬ÔòÁíÒ»¸öÊÖ±ú²»¹ÜÊÇÊ²Ã´µçÆ½£¬¶¼»á±»À­µÍ¡£
+ 258          // Õâ¾Íµ¼ÖÂÁËÁ½¸öÊÖ±úµÄÍ¬¼üÖµ°´¼üÊÇ¡°»ò¡±¹ØÏµ£¬¼´Ö»ÒªÓÐÒ»¸öÊÖ±ú°´¼ü°´ÏÂ£¬ÄÇ¸ö°´¼ü¾Í»á±»ÊÓÎª°´ÏÂ¡£
+ 259          // ÓÉ´Ë¿É¼û£¬ÐéÄâ1P2PÊÖ±ú¿ÉÒÔºÍÕæÊµÊÖ±ú¹²´æ£¬Í¬Ê±¹¤×÷¡£
+ 260          void EXPINTERFACE_InitMode1() small{
+ 261   1              EXPINTERFACE_Init(1);
+ 262   1              Register_1P = 0;
+ 263   1              Register_2P = 0;
+ 264   1              OUT0_curr = 0;
+ 265   1              J1CLK_curr = 0;
+ 266   1              J2CLK_curr = 0;
+ 267   1              OUT0_prev = 0;
+ 268   1              J1CLK_prev = 0;
+ 269   1              J2CLK_prev = 0;
+ 270   1              
+ 271   1              isReady = 0;
+ 272   1      }
+ 273          
+ 274          void EXPINTERFACE_UpdateMode1() small{
+ 275   1              // »ñµÃ1PºÍ2P°´¼ü×´Ì¬
+ 276   1              EXPINTERFACE_Set1PKeyStatus();
+ 277   1              EXPINTERFACE_Set2PKeyStatus();
+ 278   1              // ¶ÁOUT0£¨Ëø´æÐÅºÅ£©
+ 279   1              EXPINTERFACE_RefreshOUT0();
+ 280   1              // ¶ÁJ1CLK£¨1PÊ±ÖÓ£©
+ 281   1              EXPINTERFACE_RefreshJ1CLK();
+ 282   1              // ¶ÁJ2CLK£¨2PÊ±ÖÓ£©
+ 283   1              EXPINTERFACE_RefreshJ2CLK();
+ 284   1              
+ 285   1              // ¼ì²âÊÇ·ñ³öÏÖËø´æÐÅºÅ
+ 286   1              if(EXPINTERFACE_IsRisingEdgeOfOUT0()){
+ 287   2                      // ³öÏÖËø´æÐÅºÅ£¡ÔÊÐíºóÐøÂß¼­
+ 288   2                      isReady = 1;
+ 289   2              }
+ 290   1              if(isReady){
+ 291   2                      // ¼ì²âÊÇ·ñ½áÊøËø´æ
+ 292   2                      if(EXPINTERFACE_IsFallingEdgeOfOUT0()){
+ 293   3                              // Ëø´æÐÅºÅ½áÊø£¡°Ñ°´¼ü×´Ì¬Ëø´æµ½Á½¸öÊÖ±ú¼Ä´æÆ÷ÖÐ
+ 294   3                              Register_1P = keyValue_1P;
+ 295   3                              Register_2P = keyValue_2P;
+ 296   3                              // Ëø´æµÄ¼üÖµÁ¢¿Ì³öÏÖÔÚ´®ÐÐÊý¾Ý¶Ë
+ 297   3                              J1D0 = Register_1P & 1;
+ 298   3                              J2D0 = Register_2P & 1;
+ 299   3                              // ½øÈëÏÂÒ»¸ö×´Ì¬¡£ÔÚÕâÖ®ºó£¬°´¼ü×´Ì¬²»ÔÙÓ°ÏìÒÑ±»Ëø´æµÄ°´¼ü¼Ä´æÆ÷
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 6   
 
- 302   1              EXPINTERFACE_RefreshOUT0();
- 303   1              // ¶ÁJ1CLK£¨3PÊ±ÖÓ£©
- 304   1              EXPINTERFACE_RefreshJ1CLK();
- 305   1              // ¶ÁJ2CLK£¨4PÊ±ÖÓ£©
- 306   1              EXPINTERFACE_RefreshJ2CLK();
- 307   1              
- 308   1              // ¼ì²âÊÇ·ñ³öÏÖËø´æÐÅºÅ
- 309   1              if(EXPINTERFACE_IsRisingEdgeOfOUT0()){
- 310   2                      // ³öÏÖËø´æÐÅºÅ£¡ÔÊÐíºóÐøÂß¼­
- 311   2                      isReady = 1;
- 312   2              }
- 313   1              if(isReady){
- 314   2                      // ¼ì²âÊÇ·ñ½áÊøËø´æ
- 315   2                      if(EXPINTERFACE_IsFallingEdgeOfOUT0()){
- 316   3                              // Ëø´æÐÅºÅ½áÊø£¡°Ñ°´¼ü×´Ì¬Ëø´æµ½Á½¸öÊÖ±ú¼Ä´æÆ÷ÖÐ
- 317   3                              Register_3P = keyValue_3P;
- 318   3                              Register_4P = keyValue_4P;
- 319   3                              // Ëø´æµÄ¼üÖµÁ¢¿Ì³öÏÖÔÚ´®ÐÐÊý¾Ý¶Ë
- 320   3                              J1D1 = Register_3P & 1;
- 321   3                              J2D1 = Register_4P & 1;
- 322   3                              // ½øÈëÏÂÒ»¸ö×´Ì¬¡£ÔÚÕâÖ®ºó£¬°´¼ü×´Ì¬²»ÔÙÓ°ÏìÒÑ±»Ëø´æµÄ°´¼ü¼Ä´æÆ÷
- 323   3                      }
- 324   2                      // ¼ì²âÊÇ·ñ³öÏÖ3PÊ±ÖÓÉÏÉýÑØ
- 325   2                      if(EXPINTERFACE_IsRisingEdgeOfJ1CLK()){
- 326   3                              // 3PÊÖ±ú¼Ä´æÆ÷ÒÆÎ»
- 327   3                              Register_3P <<= 1;
- 328   3                              // Ëø´æµÄ¼üÖµÁ¢¿Ì³öÏÖÔÚ´®ÐÐÊý¾Ý¶Ë
- 329   3                              J1D1 = Register_3P & 1;
- 330   3                              // ½øÈëÏÂÒ»¸ö×´Ì¬
- 331   3                      }
- 332   2                      // ¼ì²âÊÇ·ñ³öÏÖ3PÊ±ÖÓÏÂ½µÑØ
- 333   2                      if(EXPINTERFACE_IsFallingEdgeOfJ1CLK()){
- 334   3                              // Õâ¸ö×´Ì¬ÏÂÃ»Ê²Ã´¿É×öµÄ
- 335   3                      }
- 336   2                      // ¼ì²âÊÇ·ñ³öÏÖ4PÊ±ÖÓÉÏÉýÑØ
- 337   2                      if(EXPINTERFACE_IsRisingEdgeOfJ2CLK()){
- 338   3                              // 4PÊÖ±ú¼Ä´æÆ÷ÒÆÎ»
- 339   3                              Register_4P <<= 1;
- 340   3                              // Ëø´æµÄ¼üÖµÁ¢¿Ì³öÏÖÔÚ´®ÐÐÊý¾Ý¶Ë
- 341   3                              J2D1 = Register_4P & 1;
- 342   3                              // ½øÈëÏÂÒ»¸ö×´Ì¬
- 343   3                      }
- 344   2                      // ¼ì²âÊÇ·ñ³öÏÖ4PÊ±ÖÓÏÂ½µÑØ
- 345   2                      if(EXPINTERFACE_IsFallingEdgeOfJ2CLK()){
- 346   3                              // Õâ¸ö×´Ì¬ÏÂÃ»Ê²Ã´¿É×öµÄ
- 347   3                      }
- 348   2              }
- 349   1              
- 350   1              // ¸üÐÂËø´æÐÅºÅ×´Ì¬
- 351   1              EXPINTERFACE_UpdateOUT0();
- 352   1              // ¸üÐÂ3PÊ±ÖÓÐÅºÅ×´Ì¬
- 353   1              EXPINTERFACE_UpdateJ1CLK();
- 354   1              // ¸üÐÂ4PÊ±ÖÓÐÅºÅ×´Ì¬
- 355   1              EXPINTERFACE_UpdateJ2CLK();
- 356   1      }
+ 300   3                      }
+ 301   2                      // ¼ì²âÊÇ·ñ³öÏÖ1PÊ±ÖÓÉÏÉýÑØ
+ 302   2                      if(EXPINTERFACE_IsRisingEdgeOfJ1CLK()){
+ 303   3                              // 1PÊÖ±ú¼Ä´æÆ÷ÒÆÎ»
+ 304   3                              Register_1P <<= 1;
+ 305   3                              // Ëø´æµÄ¼üÖµÁ¢¿Ì³öÏÖÔÚ´®ÐÐÊý¾Ý¶Ë
+ 306   3                              J1D0 = Register_1P & 1;
+ 307   3                              // ½øÈëÏÂÒ»¸ö×´Ì¬
+ 308   3                      }
+ 309   2                      // ¼ì²âÊÇ·ñ³öÏÖ1PÊ±ÖÓÏÂ½µÑØ
+ 310   2                      if(EXPINTERFACE_IsFallingEdgeOfJ1CLK()){
+ 311   3                              // Õâ¸ö×´Ì¬ÏÂÃ»Ê²Ã´¿É×öµÄ
+ 312   3                      }
+ 313   2                      // ¼ì²âÊÇ·ñ³öÏÖ2PÊ±ÖÓÉÏÉýÑØ
+ 314   2                      if(EXPINTERFACE_IsRisingEdgeOfJ2CLK()){
+ 315   3                              // 2PÊÖ±ú¼Ä´æÆ÷ÒÆÎ»
+ 316   3                              Register_2P <<= 1;
+ 317   3                              // Ëø´æµÄ¼üÖµÁ¢¿Ì³öÏÖÔÚ´®ÐÐÊý¾Ý¶Ë
+ 318   3                              J2D0 = Register_2P & 1;
+ 319   3                              // ½øÈëÏÂÒ»¸ö×´Ì¬
+ 320   3                      }
+ 321   2                      // ¼ì²âÊÇ·ñ³öÏÖ2PÊ±ÖÓÏÂ½µÑØ
+ 322   2                      if(EXPINTERFACE_IsFallingEdgeOfJ2CLK()){
+ 323   3                              // Õâ¸ö×´Ì¬ÏÂÃ»Ê²Ã´¿É×öµÄ
+ 324   3                      }
+ 325   2              }
+ 326   1              
+ 327   1              // ¸üÐÂËø´æÐÅºÅ×´Ì¬
+ 328   1              EXPINTERFACE_UpdateOUT0();
+ 329   1              // ¸üÐÂ1PÊ±ÖÓÐÅºÅ×´Ì¬
+ 330   1              EXPINTERFACE_UpdateJ1CLK();
+ 331   1              // ¸üÐÂ2PÊ±ÖÓÐÅºÅ×´Ì¬
+ 332   1              EXPINTERFACE_UpdateJ2CLK();
+ 333   1      }
+ 334          
+ 335          // ³õÊ¼»¯Mode2¡£ÔÚÕâÖÖÄ£Ê½ÏÂ£¬USB¼üÅÌ±»ÊÓÎª3PºÍ4PÊÖ±ú¡£
+ 336          void EXPINTERFACE_InitMode2() small{
+ 337   1              EXPINTERFACE_Init(1);
+ 338   1              Register_3P = 0;
+ 339   1              Register_4P = 0;
+ 340   1              OUT0_curr = 0;
+ 341   1              J1CLK_curr = 0;
+ 342   1              J2CLK_curr = 0;
+ 343   1              OUT0_prev = 0;
+ 344   1              J1CLK_prev = 0;
+ 345   1              J2CLK_prev = 0;
+ 346   1              
+ 347   1              isReady = 0;
+ 348   1      }
+ 349          
+ 350          void EXPINTERFACE_UpdateMode2() small{
+ 351   1              // »ñµÃ3PºÍ4P°´¼ü×´Ì¬
+ 352   1              EXPINTERFACE_Set3PKeyStatus();
+ 353   1              EXPINTERFACE_Set4PKeyStatus();
+ 354   1              // ¶ÁOUT0£¨Ëø´æÐÅºÅ£©
+ 355   1              EXPINTERFACE_RefreshOUT0();
+ 356   1              // ¶ÁJ1CLK£¨3PÊ±ÖÓ£©
+ 357   1              EXPINTERFACE_RefreshJ1CLK();
+ 358   1              // ¶ÁJ2CLK£¨4PÊ±ÖÓ£©
+ 359   1              EXPINTERFACE_RefreshJ2CLK();
+ 360   1              
+ 361   1              // ¼ì²âÊÇ·ñ³öÏÖËø´æÐÅºÅ
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 7   
+
+ 362   1              if(EXPINTERFACE_IsRisingEdgeOfOUT0()){
+ 363   2                      // ³öÏÖËø´æÐÅºÅ£¡ÔÊÐíºóÐøÂß¼­
+ 364   2                      isReady = 1;
+ 365   2              }
+ 366   1              if(isReady){
+ 367   2                      // ¼ì²âÊÇ·ñ½áÊøËø´æ
+ 368   2                      if(EXPINTERFACE_IsFallingEdgeOfOUT0()){
+ 369   3                              // Ëø´æÐÅºÅ½áÊø£¡°Ñ°´¼ü×´Ì¬Ëø´æµ½Á½¸öÊÖ±ú¼Ä´æÆ÷ÖÐ
+ 370   3                              Register_3P = keyValue_3P;
+ 371   3                              Register_4P = keyValue_4P;
+ 372   3                              // Ëø´æµÄ¼üÖµÁ¢¿Ì³öÏÖÔÚ´®ÐÐÊý¾Ý¶Ë
+ 373   3                              J1D1 = Register_3P & 1;
+ 374   3                              J2D1 = Register_4P & 1;
+ 375   3                              // ½øÈëÏÂÒ»¸ö×´Ì¬¡£ÔÚÕâÖ®ºó£¬°´¼ü×´Ì¬²»ÔÙÓ°ÏìÒÑ±»Ëø´æµÄ°´¼ü¼Ä´æÆ÷
+ 376   3                      }
+ 377   2                      // ¼ì²âÊÇ·ñ³öÏÖ3PÊ±ÖÓÉÏÉýÑØ
+ 378   2                      if(EXPINTERFACE_IsRisingEdgeOfJ1CLK()){
+ 379   3                              // 3PÊÖ±ú¼Ä´æÆ÷ÒÆÎ»
+ 380   3                              Register_3P <<= 1;
+ 381   3                              // Ëø´æµÄ¼üÖµÁ¢¿Ì³öÏÖÔÚ´®ÐÐÊý¾Ý¶Ë
+ 382   3                              J1D1 = Register_3P & 1;
+ 383   3                              // ½øÈëÏÂÒ»¸ö×´Ì¬
+ 384   3                      }
+ 385   2                      // ¼ì²âÊÇ·ñ³öÏÖ3PÊ±ÖÓÏÂ½µÑØ
+ 386   2                      if(EXPINTERFACE_IsFallingEdgeOfJ1CLK()){
+ 387   3                              // Õâ¸ö×´Ì¬ÏÂÃ»Ê²Ã´¿É×öµÄ
+ 388   3                      }
+ 389   2                      // ¼ì²âÊÇ·ñ³öÏÖ4PÊ±ÖÓÉÏÉýÑØ
+ 390   2                      if(EXPINTERFACE_IsRisingEdgeOfJ2CLK()){
+ 391   3                              // 4PÊÖ±ú¼Ä´æÆ÷ÒÆÎ»
+ 392   3                              Register_4P <<= 1;
+ 393   3                              // Ëø´æµÄ¼üÖµÁ¢¿Ì³öÏÖÔÚ´®ÐÐÊý¾Ý¶Ë
+ 394   3                              J2D1 = Register_4P & 1;
+ 395   3                              // ½øÈëÏÂÒ»¸ö×´Ì¬
+ 396   3                      }
+ 397   2                      // ¼ì²âÊÇ·ñ³öÏÖ4PÊ±ÖÓÏÂ½µÑØ
+ 398   2                      if(EXPINTERFACE_IsFallingEdgeOfJ2CLK()){
+ 399   3                              // Õâ¸ö×´Ì¬ÏÂÃ»Ê²Ã´¿É×öµÄ
+ 400   3                      }
+ 401   2              }
+ 402   1              
+ 403   1              // ¸üÐÂËø´æÐÅºÅ×´Ì¬
+ 404   1              EXPINTERFACE_UpdateOUT0();
+ 405   1              // ¸üÐÂ3PÊ±ÖÓÐÅºÅ×´Ì¬
+ 406   1              EXPINTERFACE_UpdateJ1CLK();
+ 407   1              // ¸üÐÂ4PÊ±ÖÓÐÅºÅ×´Ì¬
+ 408   1              EXPINTERFACE_UpdateJ2CLK();
+ 409   1      }
+ 410          
+ 411          // ³õÊ¼»¯Mode3¡£ÔÚÕâÖÖÄ£Ê½ÏÂ£¬USB¼üÅÌ±»ÊÓÎªÐ¡°ÔÍõ¼üÅÌ
+ 412          void EXPINTERFACE_InitMode3() small{
+ 413   1              EXPINTERFACE_Init(1);
+ 414   1              Register_Keyboard = 0;
+ 415   1              OUT0_curr = 0;
+ 416   1              OUT0_prev = 0;
+ 417   1              OUT1_curr = 0;
+ 418   1              OUT1_prev = 0;
+ 419   1              OUT2_curr = 0;
+ 420   1              OUT2_prev = 0;
+ 421   1              
+ 422   1              isLower = 1;
+ 423   1              row = 0;
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 8   
+
+ 424   1      }
+ 425          
+ 426          void EXPINTERFACE_UpdateMode3() small{
+ 427   1              // Èç¹ûOUT2==0£¬Ôò´ËÊ±¼üÅÌ´¦ÓÚdisable×´Ì¬
+ 428   1              if(OUT2 == 0){
+ 429   2                      return;
+ 430   2              }
+ 431   1              // ¶ÁOUT1
+ 432   1              EXPINTERFACE_RefreshOUT1();
+ 433   1              // OUT1µÄ×´Ì¬·´Ó³ÁËÈ¡¼üÅÌ¼Ä´æÆ÷µÄ¸ß4Î»»¹ÊÇµÍ4Î»
+ 434   1              if(OUT1 == 0){
+ 435   2                      isLower = 1;
+ 436   2              }else{
+ 437   2                      isLower = 0;
+ 438   2              }
+ 439   1              // Èç¹ûOUT0==1µÄ»°£¬¼üÅÌ´¦ÓÚ¸´Î»×´Ì¬£¬µ±Ç°rowÖÃÎª0
+ 440   1              if(OUT0 == 1){
+ 441   2                      row = 0;
+ 442   2                      return;
+ 443   2              }
+ 444   1              // OUT1µÄÏÂ½µÑØ´ú±írowÀÛ¼Ó
+ 445   1              if(EXPINTERFACE_IsFallingEdgeOfOUT1()){
+ 446   2                      row++;
+ 447   2              }
+ 448   1              // »ñµÃµ±Ç°ÐÐµÄ¼üÖµ
+ 449   1              EXPINTERFACE_SetSuborKeyboardKeyStatus(row);
+ 450   1              // ¸ù¾Ý¸ßµÍÎ»×´Ì¬£¬°Ñ¼üÅÌ¼Ä´æÆ÷µÄ¸ßµÍÎ»³ÊÏÖµ½¶Ë¿ÚÉÏ
+ 451   1              J2D1 = (Register_Keyboard >> (isLower ? 0 : 4)) & 1;
+ 452   1              J2D2 = (Register_Keyboard >> (isLower ? 1 : 5)) & 1;
+ 453   1              J2D3 = (Register_Keyboard >> (isLower ? 2 : 6)) & 1;
+ 454   1              J2D4 = (Register_Keyboard >> (isLower ? 3 : 7)) & 1;
+ 455   1              // ¸üÐÂOUT1µÄ×´Ì¬
+ 456   1              EXPINTERFACE_UpdateOUT1();
+ 457   1      }
+ 458          
+ 459          // ³õÊ¼»¯Mode4¡£ÔÚÕâÖÖÄ£Ê½ÏÂ£¬USB¼üÅÌ±»ÊÓÎªFamily Basic¼üÅÌ
+ 460          void EXPINTERFACE_InitMode4() small{
+ 461   1              EXPINTERFACE_Init(1);
+ 462   1              Register_Keyboard = 0;
+ 463   1              OUT0_curr = 0;
+ 464   1              OUT0_prev = 0;
+ 465   1              OUT1_curr = 0;
+ 466   1              OUT1_prev = 0;
+ 467   1              OUT2_curr = 0;
+ 468   1              OUT2_prev = 0;
+ 469   1              
+ 470   1              isLower = 1;
+ 471   1              row = 0;
+ 472   1      }
+ 473          
+ 474          void EXPINTERFACE_UpdateMode4() small{
+ 475   1              // Èç¹ûOUT2==0£¬Ôò´ËÊ±¼üÅÌ´¦ÓÚdisable×´Ì¬
+ 476   1              if(OUT2 == 0){
+ 477   2                      return;
+ 478   2              }
+ 479   1              // ¶ÁOUT1
+ 480   1              EXPINTERFACE_RefreshOUT1();
+ 481   1              // OUT1µÄ×´Ì¬·´Ó³ÁËÈ¡¼üÅÌ¼Ä´æÆ÷µÄ¸ß4Î»»¹ÊÇµÍ4Î»
+ 482   1              if(OUT1 == 0){
+ 483   2                      isLower = 1;
+ 484   2              }else{
+ 485   2                      isLower = 0;
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 9   
+
+ 486   2              }
+ 487   1              // Èç¹ûOUT0==1µÄ»°£¬¼üÅÌ´¦ÓÚ¸´Î»×´Ì¬£¬µ±Ç°rowÖÃÎª0
+ 488   1              if(OUT0 == 1){
+ 489   2                      row = 0;
+ 490   2                      return;
+ 491   2              }
+ 492   1              // OUT1µÄÏÂ½µÑØ´ú±írowÀÛ¼Ó
+ 493   1              if(EXPINTERFACE_IsFallingEdgeOfOUT1()){
+ 494   2                      row++;
+ 495   2                      // ¸ù¾Ýnesdev wikiºÍNO$NESµÄÃèÊö£¬FamilyBasic¼üÅÌÖ»ÐèÒªÉ¨Ãè9ÐÐ¾Í¿ÉÒÔ°ÑËùÓÐ°´¼üÈ«²¿É¨Ãè¡£
+ 496   2                      // µ«ÊÇnesdev wikiÒ²Ìáµ½Lode RunnerÕâ¸öÓÎÏ·´æÔÚ¼ì²â¼üÅÌµÄÂß¼­£¬ÔÚÕâ¸öÂß¼­ÖÐ»áÉ¨ÃèµÚ10ÐÐ£¨row=9£©²¢»ñµÃÊý
+             -¾Ý¡£
+ 497   2                      // Í¬Ñù£¬NO$NESÒ²ÓÐÌáµ½É¨ÃèµÚ10ÐÐ£¨row=9£©»á·µ»ØÀ¬»øÊý¾Ý£¬È»ºó¸´Î»µ½µÚ1ÐÐ£¨row=0£©¡£
+ 498   2                      // ÕâËÆºõÔÚ°µÊ¾×ÅÎÒ²»Ó¦¸ÃÉ¨Ãèµ½µÚ10ÐÐ£¨row=9£©µÄÊ±ºò¾ÍÁ¢¿Ì¸´Î»£¬¶øÊÇÓ¦¸ÃÔÊÐíÉ¨ÃèÍêÕâÒ»ÐÐ²¢µÃµ½½á¹û¡£
+ 499   2                      // ÓÉÓÚÕâ¸öÎÞ·¨È·¶¨µÄÔ­Òò£¬ÎÒÔÚÕâÀï²»½øÐÐ¸´Î»²Ù×÷£¬¶øÊÇÒÀÀµOUT0µÄ×´Ì¬½øÐÐ¸´Î»¡£
+ 500   2                      // ÎÒÈÏÎªÕâÑùÓ¦¸Ã²»»á·¢ÉúÂß¼­´íÎó¡­¡­
+ 501   2                      //if(row >= 9)
+ 502   2                      //      row = 0;
+ 503   2              }
+ 504   1              // »ñµÃµ±Ç°ÐÐµÄ¼üÖµ
+ 505   1              EXPINTERFACE_SetFamilyBasicKeyboardKeyStatus(row);
+ 506   1              // ¸ù¾Ý¸ßµÍÎ»×´Ì¬£¬°Ñ¼üÅÌ¼Ä´æÆ÷µÄ¸ßµÍÎ»³ÊÏÖµ½¶Ë¿ÚÉÏ
+ 507   1              J2D1 = (Register_Keyboard >> (isLower ? 0 : 4)) & 1;
+ 508   1              J2D2 = (Register_Keyboard >> (isLower ? 1 : 5)) & 1;
+ 509   1              J2D3 = (Register_Keyboard >> (isLower ? 2 : 6)) & 1;
+ 510   1              J2D4 = (Register_Keyboard >> (isLower ? 3 : 7)) & 1;
+ 511   1              // ¸üÐÂOUT1µÄ×´Ì¬
+ 512   1              EXPINTERFACE_UpdateOUT1();
+ 513   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    670    ----
-   CONSTANT SIZE    =     32    ----
+   CODE SIZE        =   1072    ----
+   CONSTANT SIZE    =    136    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/19/2018 18:17:07 PAGE 7   
-
-   DATA SIZE        =      9      13
+   DATA SIZE        =     10      16
    IDATA SIZE       =   ----    ----
-   BIT SIZE         =     11       1
+   BIT SIZE         =     12       1
 END OF MODULE INFORMATION.
 
 
-C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

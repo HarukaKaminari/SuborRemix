@@ -54,7 +54,7 @@ static u16 xdata tmpBuf[0x10];	// 16*2的字模缓冲区
 bit isPageAddressingMode = 0;
 
 
-static void delay(){
+static void delay() small{
 	u8 x, y;
 	for(x=0;x<0xFF;++x){
 		for(y=0;y<0xFF;++y){
@@ -63,7 +63,7 @@ static void delay(){
 	}
 }
 
-static void SSD1306_SendCommand(u8 value){
+static void SSD1306_SendCommand(u8 value) small{
 	u8 dat;
 	I2C_Start();
 	dat = 0x00;
@@ -73,7 +73,7 @@ static void SSD1306_SendCommand(u8 value){
 	I2C_Stop();
 }
 
-static void SSD1306_SendData(u8 value){
+static void SSD1306_SendData(u8 value) small{
 	u8 dat;
 	I2C_Start();
 	dat = 0x40;
@@ -83,7 +83,7 @@ static void SSD1306_SendData(u8 value){
 	I2C_Stop();
 }
 
-void SSD1306_Init(){
+void SSD1306_Init() small{
 	// 延迟200ms。这个延迟非常重要，必须要有
 	delay();
 	SSD1306_SendCommand(SSD1306_DISPLAY_OFF);	// 0xAE
@@ -116,7 +116,7 @@ void SSD1306_Init(){
 	SSD1306_SendCommand(SSD1306_DISPLAY_ON);	// 0xAF
 }
 
-void SSD1306_Refresh(){
+void SSD1306_Refresh() small{
 	u8 x = 0;
 	u16 y = 0;
 	for(y=0;y<8;++y){
@@ -126,7 +126,7 @@ void SSD1306_Refresh(){
 	}
 }
 
-void SSD1306_Clear(){
+void SSD1306_Clear() small{
 	memset(VRAM, 0, sizeof(VRAM));
 }
 
@@ -135,7 +135,7 @@ void SSD1306_Clear(){
 x最小取值为-fontSize，最大取值为127
 y最小取值为-fontSize，最大取值为31或63
 */
-void SSD1306_DrawChar(u8 fontSize, u16 chr, s8 x, s8 y, bit c){
+void SSD1306_DrawChar(u8 fontSize, u16 chr, s8 x, s8 y, bit c) small{
 	u8 i;
 	s8 page = y >> 3;
     if(x < -fontSize)x = -fontSize;
@@ -182,14 +182,14 @@ void SSD1306_DrawChar(u8 fontSize, u16 chr, s8 x, s8 y, bit c){
 	}
 }
 
-void SSD1306_DrawString(u8 fontSize, const char* str, s16 x, s16 y, bit c){
+void SSD1306_DrawString(u8 fontSize, const char* str, s16 x, s16 y, bit c) small{
 	
 }
 
 /*
 在缓冲区任意位置画点
 */
-void SSD1306_DrawPixel(u8 x, u8 y, bit c){
+void SSD1306_DrawPixel(u8 x, u8 y, bit c) small{
 	if(x > 127)return;
 	if(y > 63)return;
 	if(c)
@@ -204,7 +204,7 @@ void SSD1306_DrawPixel(u8 x, u8 y, bit c){
 #ifndef ABS
 #define ABS(a)	((a) > 0 ? (a) : -(a))
 #endif
-void SSD1306_DrawLine(u8 x0, u8 y0, u8 x1, u8 y1, bit c){
+void SSD1306_DrawLine(u8 x0, u8 y0, u8 x1, u8 y1, bit c) small{
 	s8 dx = x1 - x0;
 	s8 dy = y1 - y0;
 	s8 ux = ((dx > 0) << 1) - 1;	// x的增量方向，正负1
@@ -237,7 +237,7 @@ void SSD1306_DrawLine(u8 x0, u8 y0, u8 x1, u8 y1, bit c){
 /*
 在缓冲区任意位置填充矩形
 */
-void SSD1306_FillRect(u8 x, u8 y, u8 w, u8 h, bit c){
+void SSD1306_FillRect(u8 x, u8 y, u8 w, u8 h, bit c) small{
 	u8 i, j;
 	if(x > 127)return;
 	if(x + w > 128)w = 128 - x;
@@ -285,7 +285,7 @@ void SSD1306_FillRect(u8 x, u8 y, u8 w, u8 h, bit c){
 /*
 在缓冲区任意位置画圆
 */
-void SSD1306_DrawCircle(u8 x1, u8 y1, u8 r, bit c){
+void SSD1306_DrawCircle(u8 x1, u8 y1, u8 r, bit c) small{
 	s16 x = 0, y = r;
 	s8 d = 1 - r;
 	while(y > x){
