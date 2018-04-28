@@ -1,4 +1,4 @@
-C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 1   
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      04/08/2018 17:15:52 PAGE 1   
 
 
 C51 COMPILER V9.52.0.0, COMPILATION OF MODULE EXPINTERFACE
@@ -27,23 +27,23 @@ line level    source
   16          // 基于以上结论，J1D0和J2D0这两个端口可以不用上拉电阻。
   17          // 再根据FC电路图，验证了我的推断。J1D0~J1D1、J2D0~J2D4都有上拉电阻，因此这里可以不使用上拉。
   18          /*
-  19          OUT0    Port -> MCU             高阻输入                                P2.5
-  20          OUT1    Port -> MCU             高阻输入                                P2.6
-  21          OUT2    Port -> MCU             高阻输入                                P2.7
+  19          OUT0    Port -> MCU             11      高阻输入                                P2.5
+  20          OUT1    Port -> MCU             12      高阻输入                                P2.6
+  21          OUT2    Port -> MCU             13      高阻输入                                P2.7
   22          
-  23          J1CLK   Port -> MCU             高阻输入                                P4.6（不可位寻址）
-  24          J1D0    MCU -> Port             开漏输出，无上拉                P3.2
-  25          J1D1    MCU -> Port             开漏输出，无上拉                P3.4
+  23          J1CLK   Port -> MCU             9       高阻输入                                P4.6（不可位寻址）
+  24          J1D0    MCU -> Port             7       开漏输出，无上拉                P3.2
+  25          J1D1    MCU -> Port             8       开漏输出，无上拉                P3.4
   26          J1D2    NC
   27          J1D3    NC
   28          J1D4    NC
   29          
-  30          J2CLK   Port -> MCU             高阻输入                                P4.7（不可位寻址）
-  31          J2D0    MCU -> Port             开漏输出，无上拉                P1.2
-  32          J2D1    MCU -> Port             开漏输出，无上拉                P1.4
-  33          J2D2    MCU -> Port             开漏输出，无上拉                P1.5
-  34          J2D3    MCU -> Port             开漏输出，无上拉                P1.6
-  35          J2D4    MCU -> Port             开漏输出，无上拉                P1.7
+  30          J2CLK   Port -> MCU             10      高阻输入                                P4.7（不可位寻址）
+  31          J2D0    MCU -> Port             1       开漏输出，无上拉                P1.2
+  32          J2D1    MCU -> Port             2       开漏输出，无上拉                P1.4
+  33          J2D2    MCU -> Port             3       开漏输出，无上拉                P1.5
+  34          J2D3    MCU -> Port             4       开漏输出，无上拉                P1.6
+  35          J2D4    MCU -> Port             5       开漏输出，无上拉                P1.7
   36          */
   37          sbit OUT0 = P2^5;
   38          sbit OUT1 = P2^6;
@@ -62,7 +62,7 @@ line level    source
   51          static u8 data keyValue_3P;
   52          static u8 data keyValue_4P;
   53          
-C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 2   
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      04/08/2018 17:15:52 PAGE 2   
 
   54          static u8 data Register_1P = 0;                 // 1P手柄寄存器
   55          static u8 data Register_2P = 0;                 // 2P手柄寄存器
@@ -126,7 +126,7 @@ line level    source
  113   1      }
  114          
  115          static void EXPINTERFACE_RefreshJ2CLK() small{
-C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 3   
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      04/08/2018 17:15:52 PAGE 3   
 
  116   1              J2CLK_curr = (JOYCLK >> 7) & 1;
  117   1      }
@@ -190,7 +190,7 @@ line level    source
  175   2                      keyValue_4P |= keyCodeBuf[p[i]];
  176   2                      keyValue_4P <<= 1;
  177   2              }
-C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 4   
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      04/08/2018 17:15:52 PAGE 4   
 
  178   1      }
  179          
@@ -254,7 +254,7 @@ line level    source
  235   2                      for(i=0;i<8;++i)GPIO_SelMode(3, 0, i);
  236   2                      // P4口设置成高阻输入，无上拉
  237   2                      for(i=0;i<8;++i)GPIO_SelP4Mode(i, 0, 0);
-C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 5   
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      04/08/2018 17:15:52 PAGE 5   
 
  238   2              }
  239   1              // P1~P4口驱动能力为5mA
@@ -318,7 +318,7 @@ line level    source
  297   3                              J1D0 = Register_1P & 1;
  298   3                              J2D0 = Register_2P & 1;
  299   3                              // 进入下一个状态。在这之后，按键状态不再影响已被锁存的按键寄存器
-C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 6   
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      04/08/2018 17:15:52 PAGE 6   
 
  300   3                      }
  301   2                      // 检测是否出现1P时钟上升沿
@@ -382,7 +382,7 @@ line level    source
  359   1              EXPINTERFACE_RefreshJ2CLK();
  360   1              
  361   1              // 检测是否出现锁存信号
-C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 7   
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      04/08/2018 17:15:52 PAGE 7   
 
  362   1              if(EXPINTERFACE_IsRisingEdgeOfOUT0()){
  363   2                      // 出现锁存信号！允许后续逻辑
@@ -446,7 +446,7 @@ line level    source
  421   1              
  422   1              isLower = 1;
  423   1              row = 0;
-C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 8   
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      04/08/2018 17:15:52 PAGE 8   
 
  424   1      }
  425          
@@ -510,7 +510,7 @@ line level    source
  483   2                      isLower = 1;
  484   2              }else{
  485   2                      isLower = 0;
-C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      03/27/2018 10:00:46 PAGE 9   
+C51 COMPILER V9.52.0.0   EXPINTERFACE                                                      04/08/2018 17:15:52 PAGE 9   
 
  486   2              }
  487   1              // 如果OUT0==1的话，键盘处于复位状态，当前row置为0

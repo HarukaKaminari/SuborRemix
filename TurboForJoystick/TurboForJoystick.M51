@@ -1,4 +1,4 @@
-BL51 BANKED LINKER/LOCATER V6.22                                                        03/29/2018  18:43:44  PAGE 1
+BL51 BANKED LINKER/LOCATER V6.22                                                        04/27/2018  15:49:14  PAGE 1
 
 
 BL51 BANKED LINKER/LOCATER V6.22, INVOKED BY:
@@ -30,20 +30,18 @@ LINK MAP OF MODULE:  TurboForJoystick (MAIN)
 
             * * * * * * *   C O D E   M E M O R Y   * * * * * * *
             CODE    0000H     0003H     ABSOLUTE     
-            CODE    0003H     0003H     ABSOLUTE     
-                    0006H     0005H                  *** GAP ***
-            CODE    000BH     0003H     ABSOLUTE     
-                    000EH     0005H                  *** GAP ***
-            CODE    0013H     0003H     ABSOLUTE     
-            CODE    0016H     008CH     UNIT         ?C_C51STARTUP
-            CODE    00A2H     002DH     UNIT         ?PR?MAIN?MAIN
-            CODE    00CFH     0019H     UNIT         ?PR?TIMER0_ISR?MAIN
-            CODE    00E8H     0011H     UNIT         ?PR?TIMER0_INIT?MAIN
-            CODE    00F9H     0010H     UNIT         ?PR?GPIO_INIT?MAIN
-            CODE    0109H     000DH     UNIT         ?PR?INTERRUPT_INIT?MAIN
-            CODE    0116H     0006H     UNIT         ?PR?INT0_ISR?MAIN
-            CODE    011CH     0006H     UNIT         ?PR?INT1_ISR?MAIN
-            CODE    0122H     0006H     UNIT         ?C_INITSEG
+            CODE    0003H     0002H     ABSOLUTE     
+            CODE    0005H     0006H     INBLOCK      ?PR?INT0_ISR?MAIN
+            CODE    000BH     0002H     ABSOLUTE     
+            CODE    000DH     0006H     INBLOCK      ?PR?INT1_ISR?MAIN
+            CODE    0013H     0002H     ABSOLUTE     
+            CODE    0015H     008CH     UNIT         ?C_C51STARTUP
+            CODE    00A1H     002AH     INBLOCK      ?PR?MAIN?MAIN
+            CODE    00CBH     0019H     INBLOCK      ?PR?TIMER0_ISR?MAIN
+            CODE    00E4H     0011H     INBLOCK      ?PR?TIMER0_INIT?MAIN
+            CODE    00F5H     0010H     INBLOCK      ?PR?GPIO_INIT?MAIN
+            CODE    0105H     000DH     INBLOCK      ?PR?INTERRUPT_INIT?MAIN
+            CODE    0112H     0006H     UNIT         ?C_INITSEG
 
 
 
@@ -59,11 +57,11 @@ SEGMENT
 
 ?PR?MAIN?MAIN
   +--> ?PR?GPIO_INIT?MAIN
-BL51 BANKED LINKER/LOCATER V6.22                                                      03/29/2018  18:43:44  PAGE 2
-
-
   +--> ?PR?TIMER0_INIT?MAIN
   +--> ?PR?INTERRUPT_INIT?MAIN
+BL51 BANKED LINKER/LOCATER V6.22                                                      04/27/2018  15:49:14  PAGE 2
+
+
 
 
 
@@ -91,20 +89,20 @@ SYMBOL TABLE OF MODULE:  TurboForJoystick (MAIN)
   D:00B8H         PUBLIC        IP
   D:00D8H         PUBLIC        CCON
   B:0020H.0       PUBLIC        isReadyToHalt
-  C:00A2H         PUBLIC        main
-  C:00F9H         SYMBOL        GPIO_Init
-  C:00E8H         SYMBOL        Timer0_Init
-  C:0116H         SYMBOL        INT0_Isr
+  C:00A1H         PUBLIC        main
+  C:00F5H         SYMBOL        GPIO_Init
+  C:00E4H         SYMBOL        Timer0_Init
+  C:0005H         SYMBOL        INT0_Isr
   D:0008H         SYMBOL        count
-  C:011CH         SYMBOL        INT1_Isr
+  C:000DH         SYMBOL        INT1_Isr
   D:0087H         PUBLIC        PCON
   D:0098H         PUBLIC        SCON
   D:0089H         PUBLIC        TMOD
   D:0088H         PUBLIC        TCON
   D:008EH         PUBLIC        AUXR
-  C:00CFH         SYMBOL        Timer0_Isr
+  C:00CBH         SYMBOL        Timer0_Isr
   B:00A8H.1       PUBLIC        ET0
-  C:0109H         SYMBOL        Interrupt_Init
+  C:0105H         SYMBOL        Interrupt_Init
   B:0088H.5       PUBLIC        TF0
   D:008CH         PUBLIC        TH0
   B:0088H.0       PUBLIC        IT0
@@ -117,90 +115,90 @@ SYMBOL TABLE OF MODULE:  TurboForJoystick (MAIN)
   B:00C8H.4       PUBLIC        OUT
   D:00D0H         PUBLIC        PSW
   -------         PROC          GPIO_INIT
-  C:00F9H         LINE#         35
-  C:00F9H         LINE#         37
-BL51 BANKED LINKER/LOCATER V6.22                                                      03/29/2018  18:43:44  PAGE 3
+  C:00F5H         LINE#         35
+  C:00F5H         LINE#         37
+  C:00F8H         LINE#         38
+  C:00FAH         LINE#         39
+BL51 BANKED LINKER/LOCATER V6.22                                                      04/27/2018  15:49:14  PAGE 3
 
 
-  C:00FCH         LINE#         38
-  C:00FEH         LINE#         39
-  C:0101H         LINE#         41
-  C:0103H         LINE#         42
-  C:0105H         LINE#         43
-  C:0108H         LINE#         44
+  C:00FDH         LINE#         41
+  C:00FFH         LINE#         42
+  C:0101H         LINE#         43
+  C:0104H         LINE#         44
   -------         ENDPROC       GPIO_INIT
   -------         PROC          TIMER0_INIT
-  C:00E8H         LINE#         46
-  C:00E8H         LINE#         48
-  C:00EBH         LINE#         49
-  C:00EEH         LINE#         50
-  C:00F1H         LINE#         51
-  C:00F4H         LINE#         52
-  C:00F6H         LINE#         53
-  C:00F8H         LINE#         54
+  C:00E4H         LINE#         46
+  C:00E4H         LINE#         48
+  C:00E7H         LINE#         49
+  C:00EAH         LINE#         50
+  C:00EDH         LINE#         51
+  C:00F0H         LINE#         52
+  C:00F2H         LINE#         53
+  C:00F4H         LINE#         54
   -------         ENDPROC       TIMER0_INIT
   -------         PROC          INTERRUPT_INIT
-  C:0109H         LINE#         56
-  C:0109H         LINE#         58
-  C:010BH         LINE#         60
-  C:010DH         LINE#         62
-  C:010FH         LINE#         64
-  C:0111H         LINE#         66
-  C:0113H         LINE#         68
-  C:0115H         LINE#         69
+  C:0105H         LINE#         56
+  C:0105H         LINE#         58
+  C:0107H         LINE#         60
+  C:0109H         LINE#         62
+  C:010BH         LINE#         64
+  C:010DH         LINE#         66
+  C:010FH         LINE#         68
+  C:0111H         LINE#         69
   -------         ENDPROC       INTERRUPT_INIT
   -------         PROC          INT0_ISR
-  C:0116H         LINE#         71
-  C:0116H         LINE#         73
-  C:0119H         LINE#         75
-  C:011BH         LINE#         76
+  C:0005H         LINE#         71
+  C:0005H         LINE#         73
+  C:0008H         LINE#         75
+  C:000AH         LINE#         76
   -------         ENDPROC       INT0_ISR
   -------         PROC          TIMER0_ISR
-  C:00CFH         LINE#         78
-  C:00D3H         LINE#         80
-  C:00D5H         LINE#         82
-  C:00D7H         LINE#         84
-  C:00DEH         LINE#         85
-  C:00E1H         LINE#         86
-  C:00E3H         LINE#         87
-  C:00E3H         LINE#         88
+  C:00CBH         LINE#         78
+  C:00CFH         LINE#         80
+  C:00D1H         LINE#         82
+  C:00D3H         LINE#         84
+  C:00DAH         LINE#         85
+  C:00DDH         LINE#         86
+  C:00DFH         LINE#         87
+  C:00DFH         LINE#         88
   -------         ENDPROC       TIMER0_ISR
   -------         PROC          INT1_ISR
-  C:011CH         LINE#         90
-  C:011CH         LINE#         92
-  C:011FH         LINE#         94
-  C:0121H         LINE#         95
+  C:000DH         LINE#         90
+  C:000DH         LINE#         92
+  C:0010H         LINE#         94
+  C:0012H         LINE#         95
   -------         ENDPROC       INT1_ISR
   -------         PROC          MAIN
-  C:00A2H         LINE#         98
-  C:00A2H         LINE#         100
-  C:00A5H         LINE#         102
-  C:00A8H         LINE#         104
-  C:00ABH         LINE#         106
-  C:00ABH         LINE#         108
-  C:00B0H         LINE#         110
-BL51 BANKED LINKER/LOCATER V6.22                                                      03/29/2018  18:43:44  PAGE 4
+  C:00A1H         LINE#         98
+  C:00A1H         LINE#         100
+  C:00A3H         LINE#         102
+  C:00A5H         LINE#         104
+  C:00A7H         LINE#         106
+  C:00A7H         LINE#         108
+  C:00ACH         LINE#         110
+  C:00AEH         LINE#         112
+  C:00B1H         LINE#         113
+BL51 BANKED LINKER/LOCATER V6.22                                                      04/27/2018  15:49:14  PAGE 4
 
 
-  C:00B2H         LINE#         112
-  C:00B5H         LINE#         113
-  C:00B7H         LINE#         115
-  C:00B9H         LINE#         116
-  C:00B9H         LINE#         119
-  C:00BCH         LINE#         121
-  C:00BEH         LINE#         123
-  C:00C0H         LINE#         125
-  C:00C2H         LINE#         127
-  C:00C5H         LINE#         128
-  C:00C6H         LINE#         129
-  C:00C7H         LINE#         130
-  C:00C8H         LINE#         131
-  C:00C9H         LINE#         133
-  C:00CBH         LINE#         135
-  C:00CDH         LINE#         136
-  C:00CDH         LINE#         137
+  C:00B3H         LINE#         115
+  C:00B5H         LINE#         116
+  C:00B5H         LINE#         119
+  C:00B8H         LINE#         121
+  C:00BAH         LINE#         123
+  C:00BCH         LINE#         125
+  C:00BEH         LINE#         127
+  C:00C1H         LINE#         128
+  C:00C2H         LINE#         129
+  C:00C3H         LINE#         130
+  C:00C4H         LINE#         131
+  C:00C5H         LINE#         133
+  C:00C7H         LINE#         135
+  C:00C9H         LINE#         136
+  C:00C9H         LINE#         137
   -------         ENDPROC       MAIN
   -------         ENDMOD        MAIN
 
-Program Size: data=10.1 xdata=0 code=286
+Program Size: data=10.1 xdata=0 code=280
 LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

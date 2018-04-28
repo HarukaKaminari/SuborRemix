@@ -146,13 +146,13 @@ void	CfgFsys( )
 
 
 void main() small{
-	// 首先把所有GPIO都设置为高阻，防止输入输出误伤主板或者被主板误伤
-	EXPINTERFACE_Init(0);
+	// 单片机上电之后，首先bootloader会检测是否处于下载模式。此时GPIO口的状态文档中并未提起，因此是未知的。但愿是高阻状态吧！
 	SYSTEM_SetFreq();
 	SYSTEM_Delayms(20);
 	STDIO_Init();
 	STDIO_SetUART0Pin(1);
 	printf("UART initialized.\n");
+	EXPINTERFACE_Init(0);
 	printf("ExpInterface initialized.\n");
 	KM_LibInit();
 	printf("KMLib initialized.\n");

@@ -1,4 +1,4 @@
-C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/27/2018 10:00:46 PAGE 1   
+C51 COMPILER V9.52.0.0   TESTMAIN                                                          04/08/2018 17:15:51 PAGE 1   
 
 
 C51 COMPILER V9.52.0.0, COMPILATION OF MODULE TESTMAIN
@@ -62,7 +62,7 @@ line level    source
   53   2                      ++ SAFE_MOD;
   54   2      #endif
   55   2      #if             FREQ_SYS >= 30000000
-C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/27/2018 10:00:46 PAGE 2   
+C51 COMPILER V9.52.0.0   TESTMAIN                                                          04/08/2018 17:15:51 PAGE 2   
 
   56   2                      ++ SAFE_MOD;
   57   2      #endif
@@ -126,7 +126,7 @@ line level    source
  115   2          }
  116   1      }
  117          
-C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/27/2018 10:00:46 PAGE 3   
+C51 COMPILER V9.52.0.0   TESTMAIN                                                          04/08/2018 17:15:51 PAGE 3   
 
  118          /*******************************************************************************
  119          * Function Name  : CfgFsys( )
@@ -162,12 +162,12 @@ line level    source
  148          void main() small{
  149   1              // 首先把所有GPIO都设置为高阻，防止输入输出误伤主板或者被主板误伤
  150   1              EXPINTERFACE_Init(0);
- 151   1              printf("ExpInterface initialized.\n");
- 152   1              SYSTEM_SetFreq();
- 153   1              SYSTEM_Delayms(20);
- 154   1              STDIO_Init();
- 155   1              STDIO_SetUART0ToP0();
- 156   1              printf("UART initialized.\n");
+ 151   1              SYSTEM_SetFreq();
+ 152   1              SYSTEM_Delayms(20);
+ 153   1              STDIO_Init();
+ 154   1              STDIO_SetUART0Pin(1);
+ 155   1              printf("UART initialized.\n");
+ 156   1              printf("ExpInterface initialized.\n");
  157   1              KM_LibInit();
  158   1              printf("KMLib initialized.\n");
  159   1              while(1){
@@ -190,7 +190,7 @@ line level    source
  176   3                              // 组合键Ctrl+Alt+Shift+Esc，切换键盘工作模式
  177   3                              if(
  178   3                                      (KEYBOARD_IsKeyHold(0x100) | KEYBOARD_IsKeyHold(0x104)) &
-C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/27/2018 10:00:46 PAGE 4   
+C51 COMPILER V9.52.0.0   TESTMAIN                                                          04/08/2018 17:15:51 PAGE 4   
 
  179   3                                      (KEYBOARD_IsKeyHold(0x101) | KEYBOARD_IsKeyHold(0x105)) &
  180   3                                      (KEYBOARD_IsKeyHold(0x102) | KEYBOARD_IsKeyHold(0x106))){
@@ -254,7 +254,7 @@ line level    source
  238   4                                      if(dstBuf[s + 1] == DEV_MOUSE){                 
  239   5                                              printf("ifc %02x mouse\n", (UINT16)dstBuf[s]);
  240   5                                      }
-C51 COMPILER V9.52.0.0   TESTMAIN                                                          03/27/2018 10:00:46 PAGE 5   
+C51 COMPILER V9.52.0.0   TESTMAIN                                                          04/08/2018 17:15:51 PAGE 5   
 
  241   4                                      if(dstBuf[s + 1] == DEV_MOUSE_BIOS){                    
  242   5                                              printf("ifc %02x mouse-bios\n", (UINT16)dstBuf[s]);
@@ -267,7 +267,7 @@ line level    source
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    533    ----
+   CODE SIZE        =    535    ----
    CONSTANT SIZE    =    130    ----
    XDATA SIZE       =      2    ----
    PDATA SIZE       =   ----    ----

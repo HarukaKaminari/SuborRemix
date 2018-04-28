@@ -1,4 +1,4 @@
-C51 COMPILER V9.52.0.0   STDIO                                                             03/27/2018 10:00:46 PAGE 1   
+C51 COMPILER V9.52.0.0   STDIO                                                             04/08/2018 17:15:51 PAGE 1   
 
 
 C51 COMPILER V9.52.0.0, COMPILATION OF MODULE STDIO
@@ -40,22 +40,25 @@ line level    source
   27   1          REN = 1;                                                                   //串口0接收使能
   28   1      }
   29          
-  30          void STDIO_SetUART0ToP0() small{
+  30          void STDIO_SetUART0Pin(bit isSetToP0) small{
   31   1              PORT_CFG |= bP0_OC;
   32   1          P0_DIR |= bTXD_;
   33   1          P0_PU |= bTXD_ | bRXD_;
-  34   1          PIN_FUNC |= bUART0_PIN_X;   // 串口映射到P0.2和P0.3
-  35   1      }
+  34   1              if(isSetToP0)
+  35   1                      PIN_FUNC |= bUART0_PIN_X;       // 串口映射到P0.2和P0.3
+  36   1              else
+  37   1                      PIN_FUNC &= ~bUART0_PIN_X;      // 串口映射到P3.0和P3.1
+  38   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    130    ----
+   CODE SIZE        =    137    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----       5
    IDATA SIZE       =   ----    ----
-   BIT SIZE         =   ----    ----
+   BIT SIZE         =   ----       1
 END OF MODULE INFORMATION.
 
 

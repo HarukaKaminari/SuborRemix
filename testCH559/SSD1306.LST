@@ -1,4 +1,4 @@
-C51 COMPILER V9.52.0.0   SSD1306                                                           03/27/2018 10:00:46 PAGE 1   
+C51 COMPILER V9.52.0.0   SSD1306                                                           04/08/2018 17:15:52 PAGE 1   
 
 
 C51 COMPILER V9.52.0.0, COMPILATION OF MODULE SSD1306
@@ -62,7 +62,7 @@ line level    source
   53          
   54          bit isPageAddressingMode = 0;
   55          
-C51 COMPILER V9.52.0.0   SSD1306                                                           03/27/2018 10:00:46 PAGE 2   
+C51 COMPILER V9.52.0.0   SSD1306                                                           04/08/2018 17:15:52 PAGE 2   
 
   56          
   57          static void delay() small{
@@ -126,7 +126,7 @@ line level    source
  115   1              SSD1306_SendCommand(SSD1306_NORMAL_DISPLAY);    // 0xA6
  116   1              SSD1306_SendCommand(SSD1306_DISPLAY_ON);        // 0xAF
  117   1      }
-C51 COMPILER V9.52.0.0   SSD1306                                                           03/27/2018 10:00:46 PAGE 3   
+C51 COMPILER V9.52.0.0   SSD1306                                                           04/08/2018 17:15:52 PAGE 3   
 
  118          
  119          void SSD1306_Refresh() small{
@@ -190,7 +190,7 @@ line level    source
  177   4                                              VRAM[vramOffset] |= (tmpBuf[i] >> (16 - offsetInPage)) & 0xFF;
  178   4                                      else
  179   4                                              VRAM[vramOffset] &= ~(tmpBuf[i] >> (16 - offsetInPage)) & 0xFF;
-C51 COMPILER V9.52.0.0   SSD1306                                                           03/27/2018 10:00:46 PAGE 4   
+C51 COMPILER V9.52.0.0   SSD1306                                                           04/08/2018 17:15:52 PAGE 4   
 
  180   4                              }
  181   3                      }
@@ -254,7 +254,7 @@ line level    source
  233   3                      }
  234   2              }
  235   1      }
-C51 COMPILER V9.52.0.0   SSD1306                                                           03/27/2018 10:00:46 PAGE 5   
+C51 COMPILER V9.52.0.0   SSD1306                                                           04/08/2018 17:15:52 PAGE 5   
 
  236          
  237          /*
@@ -318,7 +318,7 @@ line level    source
  295   2                      SSD1306_DrawPixel(x1 - y, y1 + x, c);
  296   2                      SSD1306_DrawPixel(x1 - x, y1 - y, c);
  297   2                      SSD1306_DrawPixel(x1 - y, y1 - x, c);
-C51 COMPILER V9.52.0.0   SSD1306                                                           03/27/2018 10:00:46 PAGE 6   
+C51 COMPILER V9.52.0.0   SSD1306                                                           04/08/2018 17:15:52 PAGE 6   
 
  298   2                      SSD1306_DrawPixel(x1 + x, y1 - y, c);
  299   2                      SSD1306_DrawPixel(x1 + y, y1 - x, c);

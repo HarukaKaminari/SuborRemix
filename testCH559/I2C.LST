@@ -1,4 +1,4 @@
-C51 COMPILER V9.52.0.0   I2C                                                               03/27/2018 10:00:46 PAGE 1   
+C51 COMPILER V9.52.0.0   I2C                                                               04/08/2018 17:15:52 PAGE 1   
 
 
 C51 COMPILER V9.52.0.0, COMPILATION OF MODULE I2C
@@ -62,7 +62,7 @@ line level    source
   52          */
   53          static void I2C_Delay() small{
   54   1              u8 I2C_Delay_t = (I2C_DELAY_VALUE);
-C51 COMPILER V9.52.0.0   I2C                                                               03/27/2018 10:00:46 PAGE 2   
+C51 COMPILER V9.52.0.0   I2C                                                               04/08/2018 17:15:52 PAGE 2   
 
   55   1              while(--I2C_Delay_t != 0);
   56   1      }
@@ -126,7 +126,7 @@ line level    source
  114          函数：I2C_Read()
  115          功能：从从机读取1个字节的数据
  116          返回：读取的一个字节数据
-C51 COMPILER V9.52.0.0   I2C                                                               03/27/2018 10:00:46 PAGE 3   
+C51 COMPILER V9.52.0.0   I2C                                                               04/08/2018 17:15:52 PAGE 3   
 
  117          */
  118          u8 I2C_Read() small{
@@ -190,7 +190,7 @@ line level    source
  176   1              I2C_Delay();
  177   1              I2C_SCL = 1;
  178   1              I2C_Delay();
-C51 COMPILER V9.52.0.0   I2C                                                               03/27/2018 10:00:46 PAGE 4   
+C51 COMPILER V9.52.0.0   I2C                                                               04/08/2018 17:15:52 PAGE 4   
 
  179   1              I2C_SCL = 0;
  180   1              I2C_Delay();
@@ -254,7 +254,7 @@ line level    source
  238                  1：在发送地址过程中出现异常
  239                  -1：在发送数据过程中出现异常
  240          说明：
-C51 COMPILER V9.52.0.0   I2C                                                               03/27/2018 10:00:46 PAGE 5   
+C51 COMPILER V9.52.0.0   I2C                                                               04/08/2018 17:15:52 PAGE 5   
 
  241                  本函数能够很好地适应所有常见的I2C器件，不论其是否有子地址
  242                  当从机没有子地址时，参数SubAddr任意，而SubMod应当为0
@@ -318,7 +318,7 @@ line level    source
  300                  Size：数据的字节数
  301          返回：
  302                  0：接收成功
-C51 COMPILER V9.52.0.0   I2C                                                               03/27/2018 10:00:46 PAGE 6   
+C51 COMPILER V9.52.0.0   I2C                                                               04/08/2018 17:15:52 PAGE 6   
 
  303                  1：在接收过程的发送地址时出现异常
  304          说明：
@@ -382,7 +382,7 @@ line level    source
 MODULE INFORMATION:   STATIC OVERLAYABLE
    CODE SIZE        =    497    ----
    CONSTANT SIZE    =     74    ----
-C51 COMPILER V9.52.0.0   I2C                                                               03/27/2018 10:00:46 PAGE 7   
+C51 COMPILER V9.52.0.0   I2C                                                               04/08/2018 17:15:52 PAGE 7   
 
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----

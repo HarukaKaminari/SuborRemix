@@ -16,23 +16,23 @@
 // 基于以上结论，J1D0和J2D0这两个端口可以不用上拉电阻。
 // 再根据FC电路图，验证了我的推断。J1D0~J1D1、J2D0~J2D4都有上拉电阻，因此这里可以不使用上拉。
 /*
-OUT0	Port -> MCU		高阻输入				P2.5
-OUT1	Port -> MCU		高阻输入				P2.6
-OUT2	Port -> MCU		高阻输入				P2.7
+OUT0	Port -> MCU		11	高阻输入				P2.5
+OUT1	Port -> MCU		12	高阻输入				P2.6
+OUT2	Port -> MCU		13	高阻输入				P2.7
 
-J1CLK	Port -> MCU		高阻输入				P4.6（不可位寻址）
-J1D0	MCU -> Port		开漏输出，无上拉		P3.2
-J1D1	MCU -> Port		开漏输出，无上拉		P3.4
+J1CLK	Port -> MCU		9	高阻输入				P4.6（不可位寻址）
+J1D0	MCU -> Port		7	开漏输出，无上拉		P3.2
+J1D1	MCU -> Port		8	开漏输出，无上拉		P3.4
 J1D2	NC
 J1D3	NC
 J1D4	NC
 
-J2CLK	Port -> MCU		高阻输入				P4.7（不可位寻址）
-J2D0	MCU -> Port		开漏输出，无上拉		P1.2
-J2D1	MCU -> Port		开漏输出，无上拉		P1.4
-J2D2	MCU -> Port		开漏输出，无上拉		P1.5
-J2D3	MCU -> Port		开漏输出，无上拉		P1.6
-J2D4	MCU -> Port		开漏输出，无上拉		P1.7
+J2CLK	Port -> MCU		10	高阻输入				P4.7（不可位寻址）
+J2D0	MCU -> Port		1	开漏输出，无上拉		P1.2
+J2D1	MCU -> Port		2	开漏输出，无上拉		P1.4
+J2D2	MCU -> Port		3	开漏输出，无上拉		P1.5
+J2D3	MCU -> Port		4	开漏输出，无上拉		P1.6
+J2D4	MCU -> Port		5	开漏输出，无上拉		P1.7
 */
 sbit OUT0 = P2^5;
 sbit OUT1 = P2^6;

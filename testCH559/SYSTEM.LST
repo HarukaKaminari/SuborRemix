@@ -1,4 +1,4 @@
-C51 COMPILER V9.52.0.0   SYSTEM                                                            03/27/2018 10:00:46 PAGE 1   
+C51 COMPILER V9.52.0.0   SYSTEM                                                            04/08/2018 17:15:52 PAGE 1   
 
 
 C51 COMPILER V9.52.0.0, COMPILATION OF MODULE SYSTEM
@@ -62,7 +62,7 @@ line level    source
   52   2                      ++ SAFE_MOD;
   53   2      #endif
   54   2      #if             FREQ_SYS >= 28000000
-C51 COMPILER V9.52.0.0   SYSTEM                                                            03/27/2018 10:00:46 PAGE 2   
+C51 COMPILER V9.52.0.0   SYSTEM                                                            04/08/2018 17:15:52 PAGE 2   
 
   55   2                      ++ SAFE_MOD;
   56   2      #endif
@@ -126,7 +126,7 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-C51 COMPILER V9.52.0.0   SYSTEM                                                            03/27/2018 10:00:46 PAGE 3   
+C51 COMPILER V9.52.0.0   SYSTEM                                                            04/08/2018 17:15:52 PAGE 3   
 
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----
