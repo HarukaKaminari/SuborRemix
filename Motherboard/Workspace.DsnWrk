@@ -1,0 +1,8 @@
+[ProjectGroup]
+Version=1.0
+[Project1]
+ProjectPath=Circuit\Motherboard.PrjPCB
+[Project2]
+ProjectPath=Library\CH559.LibPkg
+[Project3]
+ProjectPath=Library\USB_TypeA_Female.LibPkg

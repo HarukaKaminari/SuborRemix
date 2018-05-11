@@ -1,0 +1,8 @@
+[ProjectGroup]
+Version=1.0
+[Project1]
+ProjectPath=Circuit\AudioAmplifier.PrjPCB
+[Project2]
+ProjectPath=Library\LM386.LibPkg
+[Project3]
+ProjectPath=Library\AudioJack_3.5mm.LibPkg

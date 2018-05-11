@@ -1,0 +1,12 @@
+[ProjectGroup]
+Version=1.0
+[Project1]
+ProjectPath=Circuit\WirelessJoystick.PrjPCB
+[Project2]
+ProjectPath=Library\JDY-40.LibPkg
+[Project3]
+ProjectPath=Library\STC15W204S.LibPkg
+[Project4]
+ProjectPath=Library\XC6206.LibPkg
+[Project5]
+ProjectPath=Library\GoldFinger.LibPkg

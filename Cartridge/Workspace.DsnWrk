@@ -12,5 +12,3 @@ ProjectPath=Library\CartridgeBondingFinger.LibPkg
 ProjectPath=Circuit\Cartridge.PrjPCB
 [Project6]
 ProjectPath=Library\Discrete.LibPkg
-[Project7]
-ProjectPath=Library\Mapper3.LibPkg
