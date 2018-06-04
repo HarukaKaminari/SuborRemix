@@ -1,4 +1,4 @@
-C51 COMPILER V9.52.0.0   MAIN                                                              04/13/2018 17:42:07 PAGE 1   
+C51 COMPILER V9.52.0.0   MAIN                                                              05/28/2018 17:54:41 PAGE 1   
 
 
 C51 COMPILER V9.52.0.0, COMPILATION OF MODULE MAIN
@@ -18,11 +18,11 @@ line level    source
    9          |                                                       |
   10          |2 (GPIO3)                 (GPIO0)15|
   11          |                                                       |
-  12          |3 (GPIO4)                 (LATCH)14|
+  12          |3 (GPIO4)                                14|
   13          |                                                       |
   14          |4 (GPIO5)                      (DATA)13|
   15          |                 STC15W204S            |
-  16          |5 (GPIO6)                                12|
+  16          |5 (GPIO6)                 (LATCH)12|
   17          |                                                       |
   18          |6 (VCC)                         (CLK)11|
   19          |                                                       |
@@ -30,28 +30,93 @@ line level    source
   21          |                                                       |
   22          |8 (GND)                         (RXD) 9|
   23          *---------------------------*
-  24          
-  25          */
-  26          
-  27          
-  28          sbit CLK        = P3^2;
-  29          sbit DATA       = P3^6;
-  30          sbit LATCH      = P3^7;
-  31          
-  32          
-  33          void main(){
-  34   1              
-  35   1      }
+  24          Fosc = 24MHz
+  25          
+  26          P1.0~P1.7 -> 上 左 下 右 SEL STA B A
+  27          */
+  28          
+  29          
+  30          sbit CLK        = P3^2;
+  31          sbit LATCH      = P3^3;
+  32          sbit DATA       = P3^6;
+  33          
+  34          
+  35          bit isReady = 0;
+  36          static unsigned char key = 0;
+  37          static const unsigned char data mask[] = {0x80, 0x40, 0x10, 0x20, 0x01, 0x04, 0x02, 0x08};      // A B SELECT S
+             -TART UP DOWN LEFT RIGHT。为提升速度，这个表放到RAM中
+  38          static unsigned char idx = 0;
+  39          
+  40          
+  41          static void GPIO_Init(){
+  42   1              // P1口用于接收并行信号，全部初始化为准双向，依靠内部弱上拉输出高电平
+  43   1              P1M0 = 0;
+  44   1              P1M1 = 0;
+  45   1              P1= 0xFF;
+  46   1              // P3口初始化为准双向
+  47   1              P3M0 = 0;
+  48   1              P3M1 = 0;
+  49   1              P3 = 0xFF;
+  50   1      }
+  51          
+  52          static void Interrupt_Init(){
+  53   1              // INT0中断（CLK）触发类型为上升沿+下降沿
+  54   1              IT0 = 0;
+C51 COMPILER V9.52.0.0   MAIN                                                              05/28/2018 17:54:41 PAGE 2   
+
+  55   1              // 允许INT0中断
+  56   1              EX0 = 1;
+  57   1              // INT1中断（LATCH）触发类型为下降沿
+  58   1              IT1 = 1;
+  59   1              // 允许INT1中断
+  60   1              EX1 = 1;
+  61   1              // 开启全局中断
+  62   1              EA = 1;
+  63   1      }
+  64          
+  65          static void INT0_Isr() interrupt 0{
+  66   1              // 只有已经成功锁存才允许CLK移位
+  67   1              if(isReady == 0)
+  68   1                      return;
+  69   1              // 读当前引脚电平，如果是低电平则说明是下降沿，此时直接忽略该中断
+  70   1              if(CLK == 0)
+  71   1                      return;
+  72   1              // CLK上升沿到来的时候，取锁存值的下一位输出
+  73   1              idx++;
+  74   1              DATA = key & mask[idx];
+  75   1      }
+  76          
+  77          static void INT1_Isr() interrupt 2{
+  78   1              // 只有收到LATCH下降沿的时候才允许后续的逻辑
+  79   1              isReady = 1;
+  80   1              // 当LATCH下降沿到来的时候，锁存P1口的状态，同时把键值A输出到DATA
+  81   1              key = P1;
+  82   1              idx = 0;
+  83   1              DATA = key & mask[idx];
+  84   1      }
+  85          
+  86          void main(){
+  87   1              GPIO_Init();
+  88   1              Interrupt_Init();
+  89   1              
+  90   1              while(1){
+  91   2                      PCON |= 0x02;   // 进入掉电模式
+  92   2                      _nop_();
+  93   2                      _nop_();
+  94   2                      _nop_();
+  95   2                      _nop_();
+  96   2              }
+  97   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =      1    ----
+   CODE SIZE        =    109    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =   ----    ----
+   DATA SIZE        =     10    ----
    IDATA SIZE       =   ----    ----
-   BIT SIZE         =   ----    ----
+   BIT SIZE         =      1    ----
 END OF MODULE INFORMATION.
 
 

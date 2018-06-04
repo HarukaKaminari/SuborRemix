@@ -12,3 +12,11 @@ ProjectPath=Library\CartridgeBondingFinger.LibPkg
 ProjectPath=Circuit\Cartridge.PrjPCB
 [Project6]
 ProjectPath=Library\Discrete.LibPkg
+[Project7]
+ProjectPath=FlashPinboardForMMC5.LibPkg
+[Project8]
+ProjectPath=C:\Users\Administrator\Desktop\Imported Adapter_DIP32.PrjPcb\Adapter_DIP32.PrjPcb
+[Project9]
+ProjectPath=C:\Users\Administrator\Desktop\Imported Chip_AM29F080.PrjPcb\Chip_AM29F080.PrjPcb
+[Project10]
+ProjectPath=C:\Users\Administrator\Desktop\Imported FlashAdapter_mmc5.PrjPcb\FlashAdapter_mmc5.PrjPcb
